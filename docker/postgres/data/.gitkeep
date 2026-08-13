@@ -1,0 +1,2 @@
+# This file preserves the docker/postgres/data directory in version control.
+# PostgreSQL database files stored in this directory are excluded from Git.

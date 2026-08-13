@@ -1,0 +1,37 @@
+# ==============================================================================
+# Samagra UPI Automation - Production Docker Compose Override
+# ==============================================================================
+# Usage:
+#   docker compose -f compose.yaml -f compose.production.yaml up -d --build
+# ==============================================================================
+services:
+  postgres:
+    restart: unless-stopped
+    ports: !override []
+    volumes:
+      - ./docker/postgres/data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      target: production
+    restart: unless-stopped
+    volumes: !override []
+    environment:
+      APP_ENV: production
+      CORS_ORIGINS: ""
+
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+    restart: unless-stopped
+    ports: !override
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-8080}:80"
+    volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:80/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

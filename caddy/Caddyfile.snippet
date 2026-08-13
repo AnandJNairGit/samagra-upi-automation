@@ -1,0 +1,24 @@
+# ==============================================================================
+# Samagra UPI Automation - Host Caddy Configuration Snippet
+# ==============================================================================
+# Add this snippet inside the main site block in /etc/caddy/Caddyfile
+# BEFORE the generic frontend fallback handler.
+#
+# Target Architecture:
+#   /                 -> Existing Task Management Frontend (/var/www/samagra-frontend)
+#   /api/*            -> Existing Task Management Backend (127.0.0.1:8000)
+#   /upi/*            -> Samagra UPI Frontend Container (127.0.0.1:8080)
+#   /upi-api/*        -> Samagra UPI Backend Container (127.0.0.1:8001)
+# ==============================================================================
+
+# 1. UPI Backend API Handler
+# Strips /upi-api prefix and proxies to FastAPI container at 127.0.0.1:8001
+handle_path /upi-api/* {
+    reverse_proxy 127.0.0.1:8001
+}
+
+# 2. UPI Frontend Static/SPA Handler
+# Strips /upi prefix and proxies to Nginx static container at 127.0.0.1:8080
+handle_path /upi/* {
+    reverse_proxy 127.0.0.1:8080
+}
