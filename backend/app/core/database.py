@@ -40,7 +40,9 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
-
+# Aliases for flexibility across FastAPI dependencies and background scripts
+get_db = get_db_session
+async_session_factory = AsyncSessionLocal
 
 async def check_db_connectivity() -> bool:
     """Execute a lightweight query (SELECT 1) to verify database connectivity."""

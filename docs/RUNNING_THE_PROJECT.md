@@ -125,9 +125,20 @@ upi-postgres   postgres:16.8-alpine              "docker-entrypoint.s…"   post
 ```
 
 ### Accessing in Development
-- **Frontend**: [http://127.0.0.1:5173/upi/](http://127.0.0.1:5173/upi/)
+- **Public Portal**: [http://127.0.0.1:5173/upi/](http://127.0.0.1:5173/upi/)
+- **Admin Portal Login**: [http://127.0.0.1:5173/upi/admin/login](http://127.0.0.1:5173/upi/admin/login)
 - **Backend Direct Health**: [http://127.0.0.1:8001/v1/health](http://127.0.0.1:8001/v1/health)
 - **Database Connectivity Health**: [http://127.0.0.1:8001/v1/health/db](http://127.0.0.1:8001/v1/health/db)
+- **Protected Admin Health**: [http://127.0.0.1:8001/v1/admin/health](http://127.0.0.1:8001/v1/admin/health) (Requires Bearer token)
+
+### Seeding Development Admin Account
+To create or update the local development administrator:
+```bash
+docker compose exec -e DEV_ADMIN_PASSWORD="adminpassword123" backend python scripts/seed_dev.py
+```
+Default Development Credentials:
+- **Email**: `admin@example.com`
+- **Password**: `adminpassword123`
 
 ### Stop Development Stack
 ```bash

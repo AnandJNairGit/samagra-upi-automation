@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, IdentityIdMixin, PublicIdMixin, TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.admin_session import AdminSession
     from app.models.payment_submission import PaymentSubmission
 
 
@@ -28,6 +29,11 @@ class AdminUser(Base, IdentityIdMixin, PublicIdMixin, TimestampMixin):
     reviewed_submissions: Mapped[List["PaymentSubmission"]] = relationship(
         "PaymentSubmission",
         back_populates="reviewer",
+        cascade="none",
+    )
+    sessions: Mapped[List["AdminSession"]] = relationship(
+        "AdminSession",
+        back_populates="admin_user",
         cascade="none",
     )
 

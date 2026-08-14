@@ -1,4 +1,4 @@
-# Database Architecture & Schema Specification — Phase 2
+# Database Architecture & Schema Specification (Phases 2 & 3)
 
 Comprehensive technical documentation for the **Samagra UPI Automation** PostgreSQL 16 database foundation.
 
@@ -8,6 +8,7 @@ Comprehensive technical documentation for the **Samagra UPI Automation** Postgre
 
 ```mermaid
 erDiagram
+    ADMIN_USERS ||--o{ ADMIN_SESSIONS : "authenticates"
     ADMIN_USERS ||--o{ PAYMENT_SUBMISSIONS : "reviews"
     COURSES ||--o{ BATCHES : "contains"
     COURSES ||--o{ PAYMENT_SESSIONS : "historical reference"
@@ -18,12 +19,25 @@ erDiagram
         bigint id PK
         uuid public_id UK
         varchar email UK "LOWER(email) functional index"
-        text password_hash
+        text password_hash "Argon2id"
         varchar full_name
         boolean is_active "Deactivation only"
         timestamptz last_login_at
         timestamptz created_at
         timestamptz updated_at
+    }
+
+    ADMIN_SESSIONS {
+        bigint id PK
+        uuid public_id UK
+        bigint admin_user_id FK "ON DELETE RESTRICT"
+        varchar refresh_token_hash UK "SHA-256 digest of secret"
+        text user_agent
+        inet ip_address "PostgreSQL INET"
+        timestamptz expires_at "Index ix_admin_sessions_expires_at"
+        timestamptz revoked_at "Compound index (admin_user_id, revoked_at)"
+        timestamptz created_at
+        timestamptz last_used_at
     }
 
     COURSES {
@@ -183,6 +197,10 @@ To maintain absolute historical financial auditability:
 | Table | Index Name | Columns / Expression | Type / Purpose |
 | :--- | :--- | :--- | :--- |
 | `admin_users` | `ux_admin_users_email_lower` | `LOWER(email)` | Functional Unique Index |
+| `admin_sessions` | `ux_admin_sessions_public_id` | `public_id` | Unique UUID Index |
+| `admin_sessions` | `ux_admin_sessions_refresh_token_hash` | `refresh_token_hash` | Unique Secret Hash Index |
+| `admin_sessions` | `ix_admin_sessions_admin_user_revoked` | `admin_user_id, revoked_at` | Active Sessions Compound Index |
+| `admin_sessions` | `ix_admin_sessions_expires_at` | `expires_at` | Session Expiry Cleanup Index |
 | `courses` | `ix_courses_status` | `status` | Status Filtering |
 | `batches` | `ix_batches_course_id` | `course_id` | Foreign Key Lookup |
 | `batches` | `ix_batches_status` | `status` | Status Filtering |

@@ -1,0 +1,6 @@
+deeply analyse all the previous phases implemented in @docs/previous_implementation
+
+
+Login URL: http://localhost:5173/upi/admin/login
+Email: admin@example.com
+Password: adminpassword123

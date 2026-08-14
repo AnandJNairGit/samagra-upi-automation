@@ -26,10 +26,21 @@ from app.schemas.payment_submission import (
     PaymentSubmissionResponse,
 )
 
+from app.schemas.auth import (
+    AdminHealthResponse,
+    AdminProfileResponse,
+    LoginRequest,
+    LoginResponse,
+)
+
 __all__ = [
     "AdminUserBase",
     "AdminUserCreate",
     "AdminUserResponse",
+    "AdminHealthResponse",
+    "AdminProfileResponse",
+    "LoginRequest",
+    "LoginResponse",
     "CourseBase",
     "CourseCreate",
     "CourseResponse",

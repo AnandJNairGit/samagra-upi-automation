@@ -1,6 +1,7 @@
 """Unit tests for pure persistence repository implementations."""
 
 import uuid
+from datetime import datetime, timedelta, timezone
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.admin_user import AdminUser
@@ -129,3 +130,65 @@ async def test_payment_session_and_submission_repositories(db_session: AsyncSess
     assert deactivated_count == 1
     after_deactivate = await sub_repo.get_current_for_session(db_session, ps.id)
     assert after_deactivate is None
+
+
+@pytest.mark.asyncio
+async def test_admin_session_repository_methods(db_session: AsyncSession):
+    """Verify AdminSessionRepository CRUD, row locking, and cleanup methods."""
+    from app.models.admin_session import AdminSession
+    from app.repositories.admin_session_repository import AdminSessionRepository
+
+    admin_repo = AdminUserRepository()
+    session_repo = AdminSessionRepository()
+
+    admin = await admin_repo.create(
+        db_session,
+        AdminUser(
+            public_id=uuid.uuid4(),
+            email=f"repo.session.{uuid.uuid4().hex[:6]}@samagra.org",
+            password_hash="pwd",
+            full_name="Session Repo Admin",
+            is_active=True,
+        ),
+    )
+
+    session_id = uuid.uuid4()
+    session = await session_repo.create(
+        db_session,
+        AdminSession(
+            public_id=session_id,
+            admin_user_id=admin.id,
+            refresh_token_hash="b" * 64,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+        ),
+    )
+
+    assert session.id is not None
+
+    # Test get_by_public_id
+    by_public = await session_repo.get_by_public_id(db_session, session_id)
+    assert by_public is not None
+    assert by_public.id == session.id
+
+    # Test get_by_public_id_for_update
+    for_update = await session_repo.get_by_public_id_for_update(db_session, session_id)
+    assert for_update is not None
+    assert for_update.id == session.id
+
+    # Test get_active_by_admin_id
+    active_sessions = await session_repo.get_active_by_admin_id(db_session, admin.id)
+    assert len(active_sessions) == 1
+
+    # Test revoke_all_for_admin
+    revoked = await session_repo.revoke_all_for_admin(db_session, admin.id)
+    assert revoked == 1
+
+    active_after = await session_repo.get_active_by_admin_id(db_session, admin.id)
+    assert len(active_after) == 0
+
+    # Test delete_expired_and_revoked
+    deleted = await session_repo.delete_expired_and_revoked(
+        db_session,
+        older_than=datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    assert deleted >= 1

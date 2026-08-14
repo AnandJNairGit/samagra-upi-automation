@@ -1,6 +1,6 @@
 """Centralized strongly-typed application configuration."""
 
-from typing import List, Union
+from typing import List, Optional, Union
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -34,6 +34,48 @@ class Settings(BaseSettings):
         description="Comma-separated string or list of allowed CORS origins",
     )
 
+    # Authentication & Security
+    JWT_SECRET_KEY: str = Field(
+        default="change_me_to_a_secure_jwt_secret_key_minimum_32_chars",
+        description="Cryptographic secret key for signing JWT tokens",
+    )
+    JWT_ALGORITHM: str = Field(
+        default="HS256",
+        description="Algorithm for JWT signing",
+    )
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
+        default=15,
+        description="Lifetime of access token in minutes",
+    )
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(
+        default=7,
+        description="Lifetime of refresh token session in days",
+    )
+    AUTH_COOKIE_NAME: str = Field(
+        default="samagra_refresh",
+        description="HttpOnly cookie name for refresh token",
+    )
+    AUTH_COOKIE_SECURE: Optional[bool] = Field(
+        default=None,
+        description="Whether refresh cookie requires HTTPS. If None, defaults to is_production",
+    )
+    AUTH_COOKIE_SAMESITE: str = Field(
+        default="lax",
+        description="SameSite policy for refresh cookie",
+    )
+    DEV_ADMIN_PASSWORD: Optional[str] = Field(
+        default=None,
+        description="Password for seeding development admin account. Strictly None by default.",
+    )
+
+    @field_validator("JWT_SECRET_KEY", mode="after")
+    @classmethod
+    def validate_jwt_secret(cls, v: str) -> str:
+        """Ensure JWT secret is sufficiently long and cryptographically strong."""
+        if not v or len(v.strip()) < 32:
+            raise ValueError("JWT_SECRET_KEY must be at least 32 characters long.")
+        return v
+
     @field_validator("CORS_ORIGINS", mode="after")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
@@ -48,6 +90,13 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Helper to determine if running in production mode."""
         return self.APP_ENV.lower() == "production"
+
+    @property
+    def cookie_secure(self) -> bool:
+        """Determine whether cookie should set Secure flag."""
+        if self.AUTH_COOKIE_SECURE is not None:
+            return self.AUTH_COOKIE_SECURE
+        return self.is_production
 
 
 # Singleton configuration instance

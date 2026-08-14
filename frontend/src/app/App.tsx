@@ -1,14 +1,79 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { AuthProvider, useAuth } from '../context/AuthContext';
+import { ProtectedRoute } from '../components/ProtectedRoute';
+import { AdminLoginPage } from '../pages/AdminLoginPage';
+import { AdminDashboardPage } from '../pages/AdminDashboardPage';
 import { HealthStatus } from '../components/HealthStatus';
-import { ShieldCheck, Layers } from 'lucide-react';
+import { ShieldCheck, Layers, LogIn, LayoutDashboard } from 'lucide-react';
 
-export const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigate = (path: string) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+  };
+
+  // Route matching helper
+  const isPath = (target: string) => {
+    const normalized = currentPath.endsWith('/') && currentPath.length > 1 ? currentPath.slice(0, -1) : currentPath;
+    const targetNorm = target.endsWith('/') && target.length > 1 ? target.slice(0, -1) : target;
+    return normalized === targetNorm || normalized === `${targetNorm}/`;
+  };
+
+  // 1. Admin Login Route (/upi/admin/login or /admin/login)
+  if (isPath('/upi/admin/login') || isPath('/admin/login')) {
+    return <AdminLoginPage onNavigate={navigate} />;
+  }
+
+  // 2. Admin Protected Area (/upi/admin or /admin)
+  if (currentPath.startsWith('/upi/admin') || currentPath.startsWith('/admin')) {
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminDashboardPage onNavigate={navigate} />
+      </ProtectedRoute>
+    );
+  }
+
+  // 3. Default Public Home (/upi/ or /)
   return (
     <div className="container">
       <header className="header">
-        <div className="badge">
-          <ShieldCheck size={14} />
-          Phase 1 — Infrastructure Skeleton
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div className="badge">
+            <ShieldCheck size={14} />
+            Phase 3 — Auth & Core Infrastructure
+          </div>
+          <div>
+            {isAuthenticated ? (
+              <button
+                onClick={() => navigate('/upi/admin')}
+                className="btn btn-sm btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}
+              >
+                <LayoutDashboard size={14} />
+                Admin Console
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/upi/admin/login')}
+                className="btn btn-sm btn-outline"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}
+              >
+                <LogIn size={14} />
+                Admin Sign In
+              </button>
+            )}
+          </div>
         </div>
         <h1 className="title">Samagra UPI Automation</h1>
         <p className="subtitle">
@@ -22,7 +87,7 @@ export const App: React.FC = () => {
         <div className="card">
           <h2 className="card-title">
             <Layers size={20} color="#a78bfa" />
-            Active Service Topologies
+            Active Service Topologies & Namespaces
           </h2>
           <table className="meta-table">
             <tbody>
@@ -33,6 +98,21 @@ export const App: React.FC = () => {
               <tr>
                 <td className="meta-key">Public URL Routes</td>
                 <td className="meta-val">/upi/* (Frontend), /upi-api/* (Backend)</td>
+              </tr>
+              <tr>
+                <td className="meta-key">Admin Portal Route</td>
+                <td className="meta-val">
+                  <a
+                    href="/upi/admin/login"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/upi/admin/login');
+                    }}
+                    style={{ color: '#818cf8', textDecoration: 'underline' }}
+                  >
+                    /upi/admin/login
+                  </a>
+                </td>
               </tr>
               <tr>
                 <td className="meta-key">Frontend Host Port</td>
@@ -52,8 +132,16 @@ export const App: React.FC = () => {
       </main>
 
       <footer className="footer">
-        <p>Samagra UPI Automation Platform &bull; Phase 1 Verified</p>
+        <p>Samagra UPI Automation Platform &bull; Phase 3 Authenticated</p>
       </footer>
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };

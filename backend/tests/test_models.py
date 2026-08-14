@@ -123,3 +123,40 @@ async def test_payment_session_and_submission_models(db_session: AsyncSession):
     assert submission.id is not None
     assert submission.is_current is True
     assert submission.payment_session_id == session_record.id
+
+
+@pytest.mark.asyncio
+async def test_admin_session_model_creation(db_session: AsyncSession):
+    """Verify AdminSession model creation, defaults, and AdminUser relationship."""
+    from app.models.admin_session import AdminSession
+
+    user = AdminUser(
+        public_id=uuid.uuid4(),
+        email="session.model.test@example.com",
+        password_hash="hashed_secret",
+        full_name="Session Model Admin",
+        is_active=True,
+    )
+    db_session.add(user)
+    await db_session.flush()
+
+    expires = datetime(2026, 12, 31, tzinfo=timezone.utc)
+    admin_session = AdminSession(
+        public_id=uuid.uuid4(),
+        admin_user_id=user.id,
+        refresh_token_hash="a" * 64,
+        user_agent="Mozilla/5.0 Test",
+        ip_address="192.168.1.1",
+        expires_at=expires,
+    )
+    db_session.add(admin_session)
+    await db_session.flush()
+
+    assert admin_session.id is not None
+    assert isinstance(admin_session.public_id, uuid.UUID)
+    assert admin_session.admin_user_id == user.id
+    assert admin_session.refresh_token_hash == "a" * 64
+    assert admin_session.created_at is not None
+    assert admin_session.last_used_at is not None
+    assert admin_session.revoked_at is None
+    assert admin_session.admin_user.email == "session.model.test@example.com"
