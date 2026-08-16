@@ -6,6 +6,7 @@ import { AdminDashboardPage } from '../pages/AdminDashboardPage';
 import { AdminCoursesPage } from '../pages/AdminCoursesPage';
 import { AdminBatchesPage } from '../pages/AdminBatchesPage';
 import { PublicRegistrationPage } from '../pages/PublicRegistrationPage';
+import { PublicPaymentPage } from '../pages/PublicPaymentPage';
 import { HealthStatus } from '../components/HealthStatus';
 import { ShieldCheck, Layers, LogIn, LayoutDashboard } from 'lucide-react';
 
@@ -69,17 +70,24 @@ const AppContent: React.FC = () => {
   const registerMatch = currentPath.match(/^(?:\/upi)?\/register\/([a-fA-F0-9-]{36})\/?$/);
   if (registerMatch) {
     const batchPublicId = registerMatch[1];
-    return <PublicRegistrationPage batchPublicId={batchPublicId} />;
+    return <PublicRegistrationPage batchPublicId={batchPublicId} onNavigate={navigate} />;
   }
 
-  // 6. Default Public Home (/upi/ or /)
+  // 6. Public Payment Checkout Route (/upi/payment/:paymentSessionPublicId or /payment/:paymentSessionPublicId)
+  const paymentMatch = currentPath.match(/^(?:\/upi)?\/payment\/([a-fA-F0-9-]{36})\/?$/);
+  if (paymentMatch) {
+    const paymentSessionPublicId = paymentMatch[1];
+    return <PublicPaymentPage paymentSessionPublicId={paymentSessionPublicId} onNavigate={navigate} />;
+  }
+
+  // 7. Default Public Home (/upi/ or /)
   return (
     <div className="container">
       <header className="header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div className="badge">
             <ShieldCheck size={14} />
-            Phase 5 — Public Registration
+            Phase 6 — UPI Payment Session + QR
           </div>
           <div>
             {isAuthenticated ? (

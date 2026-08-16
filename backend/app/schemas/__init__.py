@@ -16,8 +16,8 @@ from app.schemas.batch import (
     BatchUpdate,
 )
 from app.schemas.payment_session import (
-    PaymentSessionCreate,
-    PaymentSessionResponse,
+    PaymentSessionCreateRequest,
+    PaymentSessionPublicResponse,
 )
 from app.schemas.payment_submission import (
     PaymentSubmissionCreate,
@@ -50,8 +50,8 @@ __all__ = [
     "BatchCreate",
     "BatchResponse",
     "BatchUpdate",
-    "PaymentSessionCreate",
-    "PaymentSessionResponse",
+    "PaymentSessionCreateRequest",
+    "PaymentSessionPublicResponse",
     "PaymentSubmissionCreate",
     "PaymentSubmissionResponse",
     "PublicBatchResponse",

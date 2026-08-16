@@ -7,7 +7,6 @@ import React, { useEffect, useState } from 'react';
 import {
   AlertCircle,
   Calendar,
-  CheckCircle2,
   ChevronRight,
   GraduationCap,
   HelpCircle,
@@ -17,11 +16,12 @@ import {
   ShieldCheck,
   User,
 } from 'lucide-react';
-import { fetchPublicBatch, validateRegistration } from '../services/publicApi';
-import { FormErrors, ParticipantFormData, PublicBatch, PublicRegistrationContext } from '../types/public';
+import { createPaymentSession, fetchPublicBatch } from '../services/publicApi';
+import { FormErrors, ParticipantFormData, PublicBatch } from '../types/public';
 
 interface PublicRegistrationPageProps {
   batchPublicId: string;
+  onNavigate?: (path: string) => void;
 }
 
 const INDIAN_PHONE_REGEX = /^[6-9]\d{9}$/;
@@ -29,6 +29,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
   batchPublicId,
+  onNavigate,
 }) => {
   // Page states
   const [loading, setLoading] = useState<boolean>(true);
@@ -44,9 +45,6 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-
-  // Phase 5 validated handoff context
-  const [validatedContext, setValidatedContext] = useState<PublicRegistrationContext | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -155,10 +153,16 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
     setSubmissionError(null);
 
     try {
-      const result = await validateRegistration(batch.public_id, formData);
-      setValidatedContext(result);
+      const session = await createPaymentSession(batch.public_id, formData);
+      const targetPath = `/upi/payment/${session.public_id}`;
+      if (onNavigate) {
+        onNavigate(targetPath);
+      } else {
+        window.history.pushState({}, '', targetPath);
+        window.location.pathname = targetPath;
+      }
     } catch (err: any) {
-      setSubmissionError(err.message || 'Registration validation failed. Please try again.');
+      setSubmissionError(err.message || 'Unable to create payment session. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -205,74 +209,7 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
     );
   }
 
-  // 3. Validated Registration Context State (Clean Handoff Boundary)
-  if (validatedContext) {
-    return (
-      <div className="public-container">
-        <div className="public-card confirmed-card">
-          <div className="icon-badge-success">
-            <CheckCircle2 size={32} color="#10b981" />
-          </div>
-          <h1 className="confirmed-title">Registration Details Validated</h1>
-          <p className="confirmed-subtitle">
-            Your participant information is verified and ready for payment initiation.
-          </p>
-
-          <div className="summary-section">
-            <h3 className="section-heading">Program Summary</h3>
-            <div className="summary-row">
-              <span className="summary-label">Course</span>
-              <span className="summary-val font-semibold">{validatedContext.course_name}</span>
-            </div>
-            <div className="summary-row">
-              <span className="summary-label">Batch</span>
-              <span className="summary-val">{validatedContext.batch_name}</span>
-            </div>
-            <div className="summary-row">
-              <span className="summary-label">Training Fee</span>
-              <span className="summary-val amount-highlight font-semibold">
-                {formatINR(validatedContext.amount_inr)}
-              </span>
-            </div>
-          </div>
-
-          <div className="summary-section" style={{ marginTop: '1rem' }}>
-            <h3 className="section-heading">Participant Information</h3>
-            <div className="summary-row">
-              <span className="summary-label">Full Name</span>
-              <span className="summary-val font-semibold">{validatedContext.full_name}</span>
-            </div>
-            <div className="summary-row">
-              <span className="summary-label">Mobile</span>
-              <span className="summary-val monospace">{validatedContext.phone}</span>
-            </div>
-            <div className="summary-row">
-              <span className="summary-label">Email</span>
-              <span className="summary-val monospace">{validatedContext.email}</span>
-            </div>
-          </div>
-
-          <div className="phase-boundary-notice">
-            <ShieldCheck size={18} color="#818cf8" />
-            <div>
-              <strong>Phase 5 Complete:</strong> Validated registration handoff established. Real-time
-              UPI QR payment processing and verification will be handled in Phase 6.
-            </div>
-          </div>
-
-          <button
-            onClick={() => setValidatedContext(null)}
-            className="btn btn-outline"
-            style={{ width: '100%', marginTop: '1.25rem' }}
-          >
-            Edit Participant Information
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // 4. Available Registration Form State
+  // 3. Available Registration Form State
   return (
     <div className="public-container">
       <div className="public-card">
@@ -418,7 +355,7 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
               {submitting ? (
                 <>
                   <Loader2 size={18} className="spinner" />
-                  <span>Validating Registration...</span>
+                  <span>Initiating UPI Checkout...</span>
                 </>
               ) : (
                 <>

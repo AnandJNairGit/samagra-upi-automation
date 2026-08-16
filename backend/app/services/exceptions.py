@@ -148,3 +148,17 @@ class ParticipantValidationError(DomainError):
     def __init__(self, message: str):
         super().__init__(message)
 
+
+class PaymentSessionUnavailableError(DomainError):
+    """Raised when a public payment session is not found or not available."""
+
+    def __init__(self, message: str = "This payment session is no longer available."):
+        super().__init__(message)
+
+
+class PaymentSessionExpiredError(DomainError):
+    """Raised when an operation is attempted on an expired payment session."""
+
+    def __init__(self, message: str = "This payment session has expired."):
+        super().__init__(message)
+

@@ -16,6 +16,8 @@ from app.services.exceptions import (
     InvalidSessionStateError,
     InvalidStateTransitionError,
     ParticipantValidationError,
+    PaymentSessionExpiredError,
+    PaymentSessionUnavailableError,
     PublicBatchUnavailableError,
     RefreshTokenReplayError,
     SessionNotFoundError,
@@ -24,8 +26,10 @@ from app.services.exceptions import (
 from app.services.auth_service import AuthService
 from app.services.batch_service import BatchService
 from app.services.course_service import CourseService
+from app.services.payment_session_service import PaymentSessionService
 from app.services.payment_submission_service import PaymentSubmissionService
 from app.services.public_registration_service import PublicRegistrationService
+from app.services.upi_service import build_upi_uri, generate_reference_id
 
 __all__ = [
     "DomainError",
@@ -47,10 +51,15 @@ __all__ = [
     "InvalidAmountError",
     "PublicBatchUnavailableError",
     "ParticipantValidationError",
+    "PaymentSessionUnavailableError",
+    "PaymentSessionExpiredError",
     "AuthService",
     "PaymentSubmissionService",
+    "PaymentSessionService",
     "CourseService",
     "BatchService",
     "PublicRegistrationService",
+    "generate_reference_id",
+    "build_upi_uri",
 ]
 

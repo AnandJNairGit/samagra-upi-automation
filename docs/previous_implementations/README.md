@@ -13,5 +13,6 @@ This directory stores implementation plans, architectural decisions, and verific
 | **Phase 3** | Admin Authentication & Authorization | [PHASE_3_IMPLEMENTATION_PLAN.md](./PHASE_3_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
 | **Phase 4** | Course & Batch Management | [PHASE_4_IMPLEMENTATION_PLAN.md](./PHASE_4_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
 | **Phase 5** | Public Registration | [PHASE_5_IMPLEMENTATION_PLAN.md](./PHASE_5_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
-| **Phase 6** | UPI QR & Payment Session Processing | *Pending* | Planned | — |
-| **Phase 7** | Bank Statement Reconciliation & Automation | *Pending* | Planned | — |
+| **Phase 6** | UPI Payment Session + QR | [PHASE_6_IMPLEMENTATION_PLAN.md](./PHASE_6_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
+| **Phase 7** | UTR Submission & WhatsApp Notification | *Pending* | Planned | — |
+| **Phase 8** | Bank Statement Reconciliation & Automation | *Pending* | Planned | — |

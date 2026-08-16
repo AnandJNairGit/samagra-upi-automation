@@ -68,6 +68,20 @@ class Settings(BaseSettings):
         description="Password for seeding development admin account. Strictly None by default.",
     )
 
+    # UPI & Payment Processing Configuration
+    UPI_ID: str = Field(
+        default="samagralearning@ibl",
+        description="Primary UPI VPA ID for payment collection",
+    )
+    UPI_PAYEE_NAME: str = Field(
+        default="Samagra Training",
+        description="Merchant / Payee Name displayed in UPI app",
+    )
+    PAYMENT_SESSION_EXPIRE_MINUTES: int = Field(
+        default=30,
+        description="Payment session validity in minutes. Set to 0 to disable expiration.",
+    )
+
     @field_validator("JWT_SECRET_KEY", mode="after")
     @classmethod
     def validate_jwt_secret(cls, v: str) -> str:

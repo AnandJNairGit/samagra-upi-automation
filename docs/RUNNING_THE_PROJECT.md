@@ -127,6 +127,7 @@ upi-postgres   postgres:16.8-alpine              "docker-entrypoint.s…"   post
 ### Accessing in Development
 - **Public Portal**: [http://127.0.0.1:5173/upi/](http://127.0.0.1:5173/upi/)
 - **Public Batch Registration**: [http://127.0.0.1:5173/upi/register/<batch_public_id>](http://127.0.0.1:5173/upi/register/)
+- **Public UPI Payment Checkout**: [http://127.0.0.1:5173/upi/payment/<payment_session_public_id>](http://127.0.0.1:5173/upi/payment/)
 - **Admin Portal Login**: [http://127.0.0.1:5173/upi/admin/login](http://127.0.0.1:5173/upi/admin/login)
 - **Admin Courses Console**: [http://127.0.0.1:5173/upi/admin/courses](http://127.0.0.1:5173/upi/admin/courses)
 - **Admin Batches Console**: [http://127.0.0.1:5173/upi/admin/batches](http://127.0.0.1:5173/upi/admin/batches)
@@ -261,11 +262,11 @@ Output:
 ============================= test session starts ==============================
 tests/test_auth_concurrency.py::test_concurrent_refresh_token_rotation_row_locking PASSED [  1%]
 tests/test_batches_api.py::test_create_batch_success_default_active PASSED [ 15%]
-tests/test_courses_api.py::test_create_course_success_default_active PASSED [ 40%]
-tests/test_public_registration_api.py::test_public_active_batch_returns_200 PASSED [ 71%]
-tests/test_public_registration_api.py::test_public_validation_endpoint_success PASSED [ 79%]
+tests/test_courses_api.py::test_create_course_success_default_active PASSED [ 34%]
+tests/test_phase6_payment_session_api.py::test_create_payment_session_success PASSED [ 60%]
+tests/test_public_registration_api.py::test_public_active_batch_returns_200 PASSED [ 76%]
 tests/test_snapshots.py::test_historical_payment_snapshots_remain_immutable_on_batch_updates PASSED [100%]
-============================== 99 passed in 11.84s ===============================
+============================== 117 passed in 16.40s ==============================
 ```
 
 ### Run Frontend Type Check & Build Locally
