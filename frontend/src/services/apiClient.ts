@@ -7,7 +7,7 @@ import { config } from '../core/config';
 import { AdminHealthResponse, AdminUser, LoginResponse } from '../types/auth';
 
 let inMemoryAccessToken: string | null = null;
-let refreshPromise: Promise<string | null> | null = null;
+let refreshPromise: Promise<LoginResponse | null> | null = null;
 
 export function getAccessToken(): string | null {
   return inMemoryAccessToken;
@@ -20,7 +20,7 @@ export function setAccessToken(token: string | null): void {
 /**
  * Perform token refresh with single-flight mutex to avoid multiple concurrent refresh storms.
  */
-async function performTokenRefresh(): Promise<string | null> {
+export async function refreshApi(): Promise<LoginResponse | null> {
   if (refreshPromise) {
     return refreshPromise;
   }
@@ -32,7 +32,7 @@ async function performTokenRefresh(): Promise<string | null> {
         headers: {
           'Accept': 'application/json',
         },
-        credentials: 'same-origin',
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -42,7 +42,7 @@ async function performTokenRefresh(): Promise<string | null> {
 
       const data: LoginResponse = await response.json();
       setAccessToken(data.access_token);
-      return data.access_token;
+      return data;
     } catch {
       setAccessToken(null);
       return null;
@@ -52,6 +52,11 @@ async function performTokenRefresh(): Promise<string | null> {
   })();
 
   return refreshPromise;
+}
+
+async function performTokenRefresh(): Promise<string | null> {
+  const result = await refreshApi();
+  return result ? result.access_token : null;
 }
 
 /**
@@ -80,7 +85,7 @@ export async function apiFetch(
   const fetchOptions: RequestInit = {
     ...options,
     headers,
-    credentials: 'same-origin',
+    credentials: 'include',
   };
 
   let response = await fetch(url, fetchOptions);
@@ -115,21 +120,6 @@ export async function loginApi(email: string, password: string): Promise<LoginRe
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.detail || 'Invalid email or password.');
-  }
-
-  const data: LoginResponse = await response.json();
-  setAccessToken(data.access_token);
-  return data;
-}
-
-export async function refreshApi(): Promise<LoginResponse | null> {
-  const response = await apiFetch('/v1/auth/refresh', {
-    method: 'POST',
-  });
-
-  if (!response.ok) {
-    setAccessToken(null);
-    return null;
   }
 
   const data: LoginResponse = await response.json();

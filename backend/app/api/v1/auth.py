@@ -77,7 +77,7 @@ async def login(
         httponly=True,
         secure=settings.cookie_secure,
         samesite=settings.AUTH_COOKIE_SAMESITE,
-        path="/upi-api/",
+        path="/",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
     )
 
@@ -134,7 +134,7 @@ async def refresh(
         # Clear invalid/replayed cookie
         response.delete_cookie(
             key=settings.AUTH_COOKIE_NAME,
-            path="/upi-api/",
+            path="/",
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -149,7 +149,7 @@ async def refresh(
         httponly=True,
         secure=settings.cookie_secure,
         samesite=settings.AUTH_COOKIE_SAMESITE,
-        path="/upi-api/",
+        path="/",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
     )
 
@@ -179,7 +179,7 @@ async def logout(
 
     response.delete_cookie(
         key=settings.AUTH_COOKIE_NAME,
-        path="/upi-api/",
+        path="/",
     )
     return {"status": "ok", "message": "Successfully logged out."}
 
@@ -200,7 +200,7 @@ async def logout_all(
 
     response.delete_cookie(
         key=settings.AUTH_COOKIE_NAME,
-        path="/upi-api/",
+        path="/",
     )
     return {
         "status": "ok",

@@ -1,4 +1,4 @@
-/**
+5/**
  * Authentication Context maintaining in-memory access token, admin profile,
  * and automatic session restoration on app initialization.
  */
@@ -27,9 +27,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await refreshApi();
       if (response && response.access_token) {
         setAccessTokenState(response.access_token);
-        // Also fetch fresh user profile to ensure active status
-        const profile = await getMeApi();
-        setAdmin(profile);
+        if (response.admin) {
+          setAdmin(response.admin);
+        } else {
+          const profile = await getMeApi();
+          setAdmin(profile);
+        }
         return true;
       }
       setAdmin(null);

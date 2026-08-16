@@ -1,20 +1,19 @@
-/**
- * Admin Authentication Verification Dashboard
- */
-
 import React, { useEffect, useState } from 'react';
+import { AdminNav } from '../components/AdminNav';
 import { useAuth } from '../context/AuthContext';
 import { getAdminHealthApi } from '../services/apiClient';
 import { AdminHealthResponse } from '../types/auth';
 import {
   ShieldCheck,
   UserCheck,
-  LogOut,
   Radio,
   CheckCircle2,
   AlertTriangle,
   Loader2,
   RefreshCw,
+  BookOpen,
+  Layers,
+  ArrowRight,
 } from 'lucide-react';
 
 interface AdminDashboardPageProps {
@@ -22,11 +21,10 @@ interface AdminDashboardPageProps {
 }
 
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNavigate }) => {
-  const { admin, logout, logoutAll } = useAuth();
+  const { admin } = useAuth();
   const [healthData, setHealthData] = useState<AdminHealthResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState<boolean>(true);
   const [healthError, setHealthError] = useState<string | null>(null);
-  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
   const fetchHealth = async () => {
     setHealthLoading(true);
@@ -45,41 +43,67 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
     fetchHealth();
   }, []);
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await logout();
-      onNavigate('/upi/admin/login');
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  const handleLogoutAll = async () => {
-    if (!window.confirm('Are you sure you want to revoke all active sessions across all devices?')) {
-      return;
-    }
-    setIsLoggingOut(true);
-    try {
-      await logoutAll();
-      onNavigate('/upi/admin/login');
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="badge success-badge">
-          <ShieldCheck size={14} />
-          Phase 3 — Authenticated & Authorized
+    <div className="admin-page-container">
+      <AdminNav activeTab="dashboard" onNavigate={onNavigate} />
+
+      <header className="page-header">
+        <div>
+          <div className="badge success-badge">
+            <ShieldCheck size={14} />
+            Phase 4 — Admin Console
+          </div>
+          <h1 className="page-title">Admin Dashboard</h1>
+          <p className="page-subtitle">
+            Manage course offerings, cohorts, and administrator controls.
+          </p>
         </div>
-        <h1 className="title">Admin Control Console</h1>
-        <p className="subtitle">
-          Secure administrator identity and authorization foundation.
-        </p>
       </header>
+
+      {/* Module Navigation Shortcuts */}
+      <div className="grid-2" style={{ marginBottom: '24px' }}>
+        <div
+          className="card shortcut-card"
+          onClick={() => onNavigate('/upi/admin/courses')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="shortcut-icon" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
+                <BookOpen size={22} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Courses</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  Create and manage training programs & curricula
+                </p>
+              </div>
+            </div>
+            <ArrowRight size={18} color="#818cf8" />
+          </div>
+        </div>
+
+        <div
+          className="card shortcut-card"
+          onClick={() => onNavigate('/upi/admin/batches')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="shortcut-icon" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>
+                <Layers size={22} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Batches & Cohorts</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  Configure cohorts, whole-rupee amounts & schedules
+                </p>
+              </div>
+            </div>
+            <ArrowRight size={18} color="#38bdf8" />
+          </div>
+        </div>
+      </div>
 
       <div className="grid-2">
         {/* Administrator Profile Card */}
@@ -120,27 +144,6 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
               </tr>
             </tbody>
           </table>
-
-          <div className="action-row" style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem' }}>
-            <button
-              id="admin-logout-btn"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="btn btn-outline"
-            >
-              <LogOut size={16} />
-              {isLoggingOut ? 'Logging out...' : 'Sign Out'}
-            </button>
-            <button
-              id="admin-logout-all-btn"
-              onClick={handleLogoutAll}
-              disabled={isLoggingOut}
-              className="btn btn-danger-outline"
-            >
-              <AlertTriangle size={16} />
-              Revoke All Sessions
-            </button>
-          </div>
         </div>
 
         {/* Authorization Middleware Live Check */}

@@ -127,6 +127,8 @@ upi-postgres   postgres:16.8-alpine              "docker-entrypoint.s…"   post
 ### Accessing in Development
 - **Public Portal**: [http://127.0.0.1:5173/upi/](http://127.0.0.1:5173/upi/)
 - **Admin Portal Login**: [http://127.0.0.1:5173/upi/admin/login](http://127.0.0.1:5173/upi/admin/login)
+- **Admin Courses Console**: [http://127.0.0.1:5173/upi/admin/courses](http://127.0.0.1:5173/upi/admin/courses)
+- **Admin Batches Console**: [http://127.0.0.1:5173/upi/admin/batches](http://127.0.0.1:5173/upi/admin/batches)
 - **Backend Direct Health**: [http://127.0.0.1:8001/v1/health](http://127.0.0.1:8001/v1/health)
 - **Database Connectivity Health**: [http://127.0.0.1:8001/v1/health/db](http://127.0.0.1:8001/v1/health/db)
 - **Protected Admin Health**: [http://127.0.0.1:8001/v1/admin/health](http://127.0.0.1:8001/v1/admin/health) (Requires Bearer token)
@@ -261,18 +263,18 @@ docker compose exec -T postgres psql -U app_user -d training_payments < backup_f
 Execute the complete pytest test suite directly inside the running backend container:
 
 ```bash
-docker compose exec backend pytest -o cache_dir=/tmp/.pytest_cache tests/ -v
+docker compose run --rm backend pytest tests/ -v
 ```
 
 Output:
 ```text
 ============================= test session starts ==============================
-tests/test_config.py::test_default_settings PASSED                       [ 20%]
-tests/test_config.py::test_cors_origins_parsing PASSED                   [ 40%]
-tests/test_health.py::test_app_health_endpoint PASSED                    [ 60%]
-tests/test_health.py::test_database_health_endpoint_success PASSED       [ 80%]
-tests/test_health.py::test_database_health_endpoint_failure PASSED       [100%]
-============================== 5 passed in 0.68s ===============================
+tests/test_auth_concurrency.py::test_concurrent_refresh_token_rotation_row_locking PASSED [  1%]
+tests/test_batches_api.py::test_create_batch_success_default_active PASSED [ 15%]
+tests/test_courses_api.py::test_create_course_success_default_active PASSED [ 47%]
+tests/test_phase4_snapshot_invariance.py::test_payment_session_snapshots_immutable_on_course_and_batch_updates PASSED [ 83%]
+tests/test_snapshots.py::test_historical_payment_snapshots_remain_immutable_on_batch_updates PASSED [100%]
+============================== 84 passed in 25.77s ===============================
 ```
 
 ### Run Frontend Type Check & Build Locally

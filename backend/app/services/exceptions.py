@@ -70,3 +70,67 @@ class RefreshTokenReplayError(DomainError):
 
     def __init__(self, message: str = "Session has been invalidated due to token reuse."):
         super().__init__(message)
+
+
+class CourseNotFoundError(DomainError):
+    """Raised when a course is not found."""
+
+    def __init__(self, identifier: str):
+        super().__init__(f"Course '{identifier}' was not found.")
+        self.identifier = identifier
+
+
+class BatchNotFoundError(DomainError):
+    """Raised when a batch is not found."""
+
+    def __init__(self, identifier: str):
+        super().__init__(f"Batch '{identifier}' was not found.")
+        self.identifier = identifier
+
+
+class CourseArchivedError(DomainError):
+    """Raised when an action is forbidden because the target or parent course is archived."""
+
+    def __init__(self, message: str = "Course is archived and cannot be modified or receive new batches."):
+        super().__init__(message)
+
+
+class BatchArchivedError(DomainError):
+    """Raised when an action is forbidden because the batch is archived."""
+
+    def __init__(self, message: str = "Batch is archived and cannot be modified."):
+        super().__init__(message)
+
+
+class InvalidStateTransitionError(DomainError):
+    """Raised when an entity lifecycle transition is invalid or forbidden."""
+
+    def __init__(self, entity_type: str, current_status: str, target_status: str):
+        super().__init__(
+            f"Cannot transition {entity_type} from '{current_status}' to '{target_status}'."
+        )
+        self.entity_type = entity_type
+        self.current_status = current_status
+        self.target_status = target_status
+
+
+class BatchCourseImmutableError(DomainError):
+    """Raised when attempting to reassign a batch's course after payment sessions have been created."""
+
+    def __init__(self, message: str = "Cannot reassign course for a batch with existing payment sessions."):
+        super().__init__(message)
+
+
+class InvalidDateRangeError(DomainError):
+    """Raised when batch ends_at is before starts_at."""
+
+    def __init__(self, message: str = "Batch end date (ends_at) must be on or after start date (starts_at)."):
+        super().__init__(message)
+
+
+class InvalidAmountError(DomainError):
+    """Raised when an invalid monetary amount is provided."""
+
+    def __init__(self, message: str = "Amount must be a positive integer in whole INR (amount_inr > 0)."):
+        super().__init__(message)
+

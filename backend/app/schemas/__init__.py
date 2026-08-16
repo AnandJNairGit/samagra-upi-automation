@@ -6,13 +6,11 @@ from app.schemas.admin_user import (
     AdminUserResponse,
 )
 from app.schemas.course import (
-    CourseBase,
     CourseCreate,
     CourseResponse,
     CourseUpdate,
 )
 from app.schemas.batch import (
-    BatchBase,
     BatchCreate,
     BatchResponse,
     BatchUpdate,
@@ -41,11 +39,9 @@ __all__ = [
     "AdminProfileResponse",
     "LoginRequest",
     "LoginResponse",
-    "CourseBase",
     "CourseCreate",
     "CourseResponse",
     "CourseUpdate",
-    "BatchBase",
     "BatchCreate",
     "BatchResponse",
     "BatchUpdate",

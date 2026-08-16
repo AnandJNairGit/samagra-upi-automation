@@ -1,5 +1,6 @@
 """Batch database model."""
 
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, Index, String
@@ -47,6 +48,26 @@ class Batch(Base, IdentityIdMixin, PublicIdMixin, TimestampMixin):
         back_populates="batch",
         cascade="none",
     )
+
+    @property
+    def course_public_id(self) -> Optional[uuid.UUID]:
+        """Expose parent course public UUID if relationship is loaded in session state dict."""
+        from sqlalchemy import inspect
+        state = inspect(self)
+        if "course" in state.dict and state.dict["course"] is not None:
+            return state.dict["course"].public_id
+        return None
+
+    @property
+    def course_name(self) -> Optional[str]:
+        """Expose parent course name if relationship is loaded in session state dict."""
+        from sqlalchemy import inspect
+        state = inspect(self)
+        if "course" in state.dict and state.dict["course"] is not None:
+            return state.dict["course"].name
+        return None
+
+
 
     __table_args__ = (
         CheckConstraint("amount_inr > 0", name="ck_batches_amount_inr"),

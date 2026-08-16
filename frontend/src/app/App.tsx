@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { AdminLoginPage } from '../pages/AdminLoginPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
+import { AdminCoursesPage } from '../pages/AdminCoursesPage';
+import { AdminBatchesPage } from '../pages/AdminBatchesPage';
 import { HealthStatus } from '../components/HealthStatus';
 import { ShieldCheck, Layers, LogIn, LayoutDashboard } from 'lucide-react';
 
@@ -20,7 +22,7 @@ const AppContent: React.FC = () => {
 
   const navigate = (path: string) => {
     window.history.pushState({}, '', path);
-    setCurrentPath(path);
+    setCurrentPath(window.location.pathname);
   };
 
   // Route matching helper
@@ -35,8 +37,26 @@ const AppContent: React.FC = () => {
     return <AdminLoginPage onNavigate={navigate} />;
   }
 
-  // 2. Admin Protected Area (/upi/admin or /admin)
-  if (currentPath.startsWith('/upi/admin') || currentPath.startsWith('/admin')) {
+  // 2. Admin Protected Courses Route (/upi/admin/courses or /admin/courses)
+  if (isPath('/upi/admin/courses') || isPath('/admin/courses')) {
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminCoursesPage onNavigate={navigate} />
+      </ProtectedRoute>
+    );
+  }
+
+  // 3. Admin Protected Batches Route (/upi/admin/batches or /admin/batches)
+  if (isPath('/upi/admin/batches') || isPath('/admin/batches')) {
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminBatchesPage onNavigate={navigate} />
+      </ProtectedRoute>
+    );
+  }
+
+  // 4. Admin Protected Dashboard Root (/upi/admin or /admin)
+  if (isPath('/upi/admin') || isPath('/admin')) {
     return (
       <ProtectedRoute onNavigate={navigate}>
         <AdminDashboardPage onNavigate={navigate} />
@@ -44,14 +64,14 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // 3. Default Public Home (/upi/ or /)
+  // 5. Default Public Home (/upi/ or /)
   return (
     <div className="container">
       <header className="header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div className="badge">
             <ShieldCheck size={14} />
-            Phase 3 — Auth & Core Infrastructure
+            Phase 4 — Course & Batch Management
           </div>
           <div>
             {isAuthenticated ? (
@@ -77,7 +97,7 @@ const AppContent: React.FC = () => {
         </div>
         <h1 className="title">Samagra UPI Automation</h1>
         <p className="subtitle">
-          Foundational modular monolith stack: Vite + React, FastAPI, PostgreSQL, and Host Caddy.
+          Modular monolith stack: Vite + React, FastAPI, PostgreSQL, and Host Caddy.
         </p>
       </header>
 
@@ -132,7 +152,7 @@ const AppContent: React.FC = () => {
       </main>
 
       <footer className="footer">
-        <p>Samagra UPI Automation Platform &bull; Phase 3 Authenticated</p>
+        <p>Samagra UPI Automation Platform &bull; Phase 4 Verified</p>
       </footer>
     </div>
   );
