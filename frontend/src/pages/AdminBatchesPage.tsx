@@ -4,6 +4,7 @@ import { getBatches, createBatch, updateBatch } from '../services/batchApi';
 import { getCourses } from '../services/courseApi';
 import { Batch, BatchStatus } from '../types/batch';
 import { Course } from '../types/course';
+import { config } from '../core/config';
 import {
   Plus,
   Edit2,
@@ -17,6 +18,8 @@ import {
   X,
   Lock,
   Calendar,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface AdminBatchesPageProps {
@@ -28,6 +31,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [copiedBatchId, setCopiedBatchId] = useState<string | null>(null);
 
   // URL-driven query params
   const getSearchParams = () => new URLSearchParams(window.location.search);
@@ -240,6 +244,29 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
     }
   };
 
+  const copyRegistrationLink = async (batch: Batch) => {
+    const rawBasePath = config.basePath || '/upi/';
+    const basePath = rawBasePath.endsWith('/') ? rawBasePath : `${rawBasePath}/`;
+    const fullUrl = `${window.location.origin}${basePath}register/${batch.public_id}`;
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(fullUrl);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = fullUrl;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setCopiedBatchId(batch.public_id);
+      setTimeout(() => setCopiedBatchId(null), 2500);
+    } catch {
+      alert(`Could not copy to clipboard. Link URL: ${fullUrl}`);
+    }
+  };
+
   const formatINR = (val: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -400,6 +427,32 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                       <div className="table-actions">
                         {!isArchived ? (
                           <>
+                            <button
+                              onClick={() => copyRegistrationLink(batch)}
+                              className="btn-action"
+                              title={
+                                batch.status === 'ACTIVE'
+                                  ? 'Copy Public Registration Link'
+                                  : 'Copy Registration Link (Note: Inactive batches display as unavailable to participants)'
+                              }
+                              style={{
+                                color: copiedBatchId === batch.public_id ? '#34d399' : '#38bdf8',
+                                borderColor: copiedBatchId === batch.public_id ? 'rgba(52, 211, 153, 0.4)' : undefined,
+                              }}
+                            >
+                              {copiedBatchId === batch.public_id ? (
+                                <>
+                                  <Check size={14} color="#34d399" />
+                                  <span style={{ color: '#34d399', fontWeight: 600 }}>Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy size={14} color="#38bdf8" />
+                                  <span>Copy Link</span>
+                                </>
+                              )}
+                            </button>
+
                             <button
                               onClick={() => openEditModal(batch)}
                               className="btn-action"

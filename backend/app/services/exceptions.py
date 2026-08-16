@@ -134,3 +134,17 @@ class InvalidAmountError(DomainError):
     def __init__(self, message: str = "Amount must be a positive integer in whole INR (amount_inr > 0)."):
         super().__init__(message)
 
+
+class PublicBatchUnavailableError(DomainError):
+    """Raised when a public registration batch is not found, inactive, archived, or parent course is inactive/archived."""
+
+    def __init__(self, message: str = "This registration link is no longer available."):
+        super().__init__(message)
+
+
+class ParticipantValidationError(DomainError):
+    """Raised when public participant registration details fail domain validation."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+

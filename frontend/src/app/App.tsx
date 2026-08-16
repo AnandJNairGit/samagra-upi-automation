@@ -5,6 +5,7 @@ import { AdminLoginPage } from '../pages/AdminLoginPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
 import { AdminCoursesPage } from '../pages/AdminCoursesPage';
 import { AdminBatchesPage } from '../pages/AdminBatchesPage';
+import { PublicRegistrationPage } from '../pages/PublicRegistrationPage';
 import { HealthStatus } from '../components/HealthStatus';
 import { ShieldCheck, Layers, LogIn, LayoutDashboard } from 'lucide-react';
 
@@ -64,14 +65,21 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // 5. Default Public Home (/upi/ or /)
+  // 5. Public Registration Route (/upi/register/:batchPublicId or /register/:batchPublicId)
+  const registerMatch = currentPath.match(/^(?:\/upi)?\/register\/([a-fA-F0-9-]{36})\/?$/);
+  if (registerMatch) {
+    const batchPublicId = registerMatch[1];
+    return <PublicRegistrationPage batchPublicId={batchPublicId} />;
+  }
+
+  // 6. Default Public Home (/upi/ or /)
   return (
     <div className="container">
       <header className="header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div className="badge">
             <ShieldCheck size={14} />
-            Phase 4 — Course & Batch Management
+            Phase 5 — Public Registration
           </div>
           <div>
             {isAuthenticated ? (

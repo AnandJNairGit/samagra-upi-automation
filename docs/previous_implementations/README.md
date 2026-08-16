@@ -12,5 +12,6 @@ This directory stores implementation plans, architectural decisions, and verific
 | **Phase 2** | Database Foundation & Migrations | [PHASE_2_IMPLEMENTATION_PLAN.md](./PHASE_2_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
 | **Phase 3** | Admin Authentication & Authorization | [PHASE_3_IMPLEMENTATION_PLAN.md](./PHASE_3_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
 | **Phase 4** | Course & Batch Management | [PHASE_4_IMPLEMENTATION_PLAN.md](./PHASE_4_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
-| **Phase 5** | UPI QR & Payment Processing | *Pending* | Planned | — |
-| **Phase 6** | Bank Statement Reconciliation & Automation | *Pending* | Planned | — |
+| **Phase 5** | Public Registration | [PHASE_5_IMPLEMENTATION_PLAN.md](./PHASE_5_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
+| **Phase 6** | UPI QR & Payment Session Processing | *Pending* | Planned | — |
+| **Phase 7** | Bank Statement Reconciliation & Automation | *Pending* | Planned | — |

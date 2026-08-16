@@ -126,6 +126,7 @@ upi-postgres   postgres:16.8-alpine              "docker-entrypoint.s…"   post
 
 ### Accessing in Development
 - **Public Portal**: [http://127.0.0.1:5173/upi/](http://127.0.0.1:5173/upi/)
+- **Public Batch Registration**: [http://127.0.0.1:5173/upi/register/<batch_public_id>](http://127.0.0.1:5173/upi/register/)
 - **Admin Portal Login**: [http://127.0.0.1:5173/upi/admin/login](http://127.0.0.1:5173/upi/admin/login)
 - **Admin Courses Console**: [http://127.0.0.1:5173/upi/admin/courses](http://127.0.0.1:5173/upi/admin/courses)
 - **Admin Batches Console**: [http://127.0.0.1:5173/upi/admin/batches](http://127.0.0.1:5173/upi/admin/batches)
@@ -202,7 +203,7 @@ handle_path /upi/* {
 # 1. Validate configuration syntax
 sudo caddy validate --config /etc/caddy/Caddyfile
 
-# 2. Gracefully reload Caddy without downtime
+# 2. Gracefully reload Caddy systemd service (zero downtime)
 sudo systemctl reload caddy
 ```
 
@@ -220,37 +221,26 @@ curl http://<SERVER_IP>/upi-api/v1/health/db
 
 ---
 
-## 7. PostgreSQL Persistence & Permissions
+## 7. Database Migrations & Administration
 
-### Host Bind Mount Location
-PostgreSQL data files are stored on the host filesystem at:
-```text
-./docker/postgres/data/pgdata/
-```
+Alembic manages database revisions automatically.
 
-### Host Permissions Setup (Linux Droplet)
-PostgreSQL inside the container runs as the `postgres` user with `UID 999`.
-
-To ensure proper permissions on Linux:
+### Apply Migrations
 ```bash
-# Create directory
-mkdir -p docker/postgres/data
-
-# Assign ownership to UID 999 (PostgreSQL daemon user)
-sudo chown -R 999:999 docker/postgres/data
-sudo chmod 700 docker/postgres/data
+docker compose exec backend alembic upgrade head
 ```
-> [!CAUTION]
-> Never use `chmod 777`. The `chown 999:999` approach gives the container daemon exclusive permissions without exposing files to other users.
 
-### Database Backups (Logical `pg_dump`)
-Do not copy live files from `./docker/postgres/data` while the database is running. Instead, create consistent logical SQL backups using `pg_dump`:
-
+### Check Current Migration Revision
 ```bash
-docker compose exec -T postgres pg_dump -U app_user training_payments > backup_$(date +%F_%H%M%S).sql
+docker compose exec backend alembic current
 ```
 
-To restore a backup:
+### Backup Database
+```bash
+docker compose exec -T postgres pg_dump -U app_user training_payments > backup_$(date +%Y%m%d_%H%M%S).sql
+```
+
+### Restore Database
 ```bash
 docker compose exec -T postgres psql -U app_user -d training_payments < backup_file.sql
 ```
@@ -271,10 +261,11 @@ Output:
 ============================= test session starts ==============================
 tests/test_auth_concurrency.py::test_concurrent_refresh_token_rotation_row_locking PASSED [  1%]
 tests/test_batches_api.py::test_create_batch_success_default_active PASSED [ 15%]
-tests/test_courses_api.py::test_create_course_success_default_active PASSED [ 47%]
-tests/test_phase4_snapshot_invariance.py::test_payment_session_snapshots_immutable_on_course_and_batch_updates PASSED [ 83%]
+tests/test_courses_api.py::test_create_course_success_default_active PASSED [ 40%]
+tests/test_public_registration_api.py::test_public_active_batch_returns_200 PASSED [ 71%]
+tests/test_public_registration_api.py::test_public_validation_endpoint_success PASSED [ 79%]
 tests/test_snapshots.py::test_historical_payment_snapshots_remain_immutable_on_batch_updates PASSED [100%]
-============================== 84 passed in 25.77s ===============================
+============================== 99 passed in 11.84s ===============================
 ```
 
 ### Run Frontend Type Check & Build Locally

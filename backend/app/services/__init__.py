@@ -15,6 +15,8 @@ from app.services.exceptions import (
     InvalidRefreshTokenError,
     InvalidSessionStateError,
     InvalidStateTransitionError,
+    ParticipantValidationError,
+    PublicBatchUnavailableError,
     RefreshTokenReplayError,
     SessionNotFoundError,
     SubmissionNotFoundError,
@@ -23,6 +25,7 @@ from app.services.auth_service import AuthService
 from app.services.batch_service import BatchService
 from app.services.course_service import CourseService
 from app.services.payment_submission_service import PaymentSubmissionService
+from app.services.public_registration_service import PublicRegistrationService
 
 __all__ = [
     "DomainError",
@@ -42,9 +45,12 @@ __all__ = [
     "BatchCourseImmutableError",
     "InvalidDateRangeError",
     "InvalidAmountError",
+    "PublicBatchUnavailableError",
+    "ParticipantValidationError",
     "AuthService",
     "PaymentSubmissionService",
     "CourseService",
     "BatchService",
+    "PublicRegistrationService",
 ]
 

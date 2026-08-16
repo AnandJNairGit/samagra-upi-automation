@@ -30,6 +30,11 @@ from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
 )
+from app.schemas.public import (
+    PublicBatchResponse,
+    PublicRegistrationValidateRequest,
+    PublicRegistrationValidateResponse,
+)
 
 __all__ = [
     "AdminUserBase",
@@ -49,4 +54,7 @@ __all__ = [
     "PaymentSessionResponse",
     "PaymentSubmissionCreate",
     "PaymentSubmissionResponse",
+    "PublicBatchResponse",
+    "PublicRegistrationValidateRequest",
+    "PublicRegistrationValidateResponse",
 ]
