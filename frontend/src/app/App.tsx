@@ -8,6 +8,8 @@ import { AdminBatchesPage } from '../pages/AdminBatchesPage';
 import { AdminPaymentsPage } from '../pages/AdminPaymentsPage';
 import { AdminSubmittedPaymentsPage } from '../pages/AdminSubmittedPaymentsPage';
 import { AdminPaymentDetailPage } from '../pages/AdminPaymentDetailPage';
+import { AdminStatementImportsPage } from '../pages/AdminStatementImportsPage';
+import { AdminStatementImportDetailPage } from '../pages/AdminStatementImportDetailPage';
 import { PublicRegistrationPage } from '../pages/PublicRegistrationPage';
 import { PublicPaymentPage } from '../pages/PublicPaymentPage';
 import { HealthStatus } from '../components/HealthStatus';
@@ -91,6 +93,25 @@ const AppContent: React.FC = () => {
     );
   }
 
+  // 3.4 Admin Protected Statement Import Detail Route (/upi/admin/statement-imports/:importPublicId)
+  const statementImportDetailMatch = currentPath.match(/^(?:\/upi)?\/admin\/statement-imports\/([a-fA-F0-9-]{36})\/?$/);
+  if (statementImportDetailMatch) {
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminStatementImportDetailPage />
+      </ProtectedRoute>
+    );
+  }
+
+  // 3.5 Admin Protected Statement Imports List Route (/upi/admin/statement-imports)
+  if (isPath('/upi/admin/statement-imports') || isPath('/admin/statement-imports')) {
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminStatementImportsPage />
+      </ProtectedRoute>
+    );
+  }
+
   // 4. Admin Protected Dashboard Root (/upi/admin or /admin)
   if (isPath('/upi/admin') || isPath('/admin')) {
     return (
@@ -121,7 +142,7 @@ const AppContent: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div className="badge">
             <ShieldCheck size={14} />
-            Phase 7 — UTR Submission + WhatsApp
+            Phase 9 — Google Pay / UPI Statement Import
           </div>
           <div>
             {isAuthenticated ? (
@@ -202,7 +223,7 @@ const AppContent: React.FC = () => {
       </main>
 
       <footer className="footer">
-        <p>Samagra UPI Automation Platform &bull; Phase 7 Verified</p>
+        <p>Samagra UPI Automation Platform &bull; Phase 9 Statement Import Verified</p>
       </footer>
     </div>
   );

@@ -85,6 +85,10 @@ class Settings(BaseSettings):
         default="919876543210",
         description="Administrator WhatsApp phone number with country code (digits only) for notification deep links",
     )
+    STATEMENT_SOURCE_TIMEZONE: str = Field(
+        default="Asia/Kolkata",
+        description="Default timezone for naive timestamps in imported bank statements",
+    )
 
     @field_validator("JWT_SECRET_KEY", mode="after")
     @classmethod

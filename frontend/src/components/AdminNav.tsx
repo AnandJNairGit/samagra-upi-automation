@@ -6,25 +6,35 @@ import {
   Layers,
   CreditCard,
   CheckSquare,
+  FileSpreadsheet,
   LogOut,
   User,
   ShieldCheck,
 } from 'lucide-react';
 
 interface AdminNavProps {
-  activeTab: 'dashboard' | 'courses' | 'batches' | 'payments' | 'submitted';
-  onNavigate: (path: string) => void;
+  activeTab?: 'dashboard' | 'courses' | 'batches' | 'payments' | 'submitted' | 'statement-imports';
+  onNavigate?: (path: string) => void;
 }
 
 export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => {
   const { admin, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  const navigateTo = (path: string) => {
+    if (onNavigate) {
+      onNavigate(path);
+    } else {
+      window.history.pushState({}, '', path);
+      window.dispatchEvent(new Event('popstate'));
+    }
+  };
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
       await logout();
-      onNavigate('/upi/admin/login');
+      navigateTo('/upi/admin/login');
     } finally {
       setIsLoggingOut(false);
     }
@@ -35,7 +45,7 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
       <div className="admin-nav-left">
         <div
           className="admin-brand"
-          onClick={() => onNavigate('/upi/admin')}
+          onClick={() => navigateTo('/upi/admin')}
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
           <ShieldCheck size={20} color="#818cf8" />
@@ -45,7 +55,7 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
         <div className="admin-nav-tabs">
           <button
             className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => onNavigate('/upi/admin')}
+            onClick={() => navigateTo('/upi/admin')}
           >
             <LayoutDashboard size={16} />
             <span>Dashboard</span>
@@ -53,7 +63,7 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
 
           <button
             className={`nav-tab ${activeTab === 'courses' ? 'active' : ''}`}
-            onClick={() => onNavigate('/upi/admin/courses')}
+            onClick={() => navigateTo('/upi/admin/courses')}
           >
             <BookOpen size={16} />
             <span>Courses</span>
@@ -61,7 +71,7 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
 
           <button
             className={`nav-tab ${activeTab === 'batches' ? 'active' : ''}`}
-            onClick={() => onNavigate('/upi/admin/batches')}
+            onClick={() => navigateTo('/upi/admin/batches')}
           >
             <Layers size={16} />
             <span>Batches</span>
@@ -69,7 +79,7 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
 
           <button
             className={`nav-tab ${activeTab === 'payments' ? 'active' : ''}`}
-            onClick={() => onNavigate('/upi/admin/payments')}
+            onClick={() => navigateTo('/upi/admin/payments')}
           >
             <CreditCard size={16} />
             <span>Payments</span>
@@ -77,10 +87,18 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
 
           <button
             className={`nav-tab ${activeTab === 'submitted' ? 'active' : ''}`}
-            onClick={() => onNavigate('/upi/admin/payments/submitted')}
+            onClick={() => navigateTo('/upi/admin/payments/submitted')}
           >
             <CheckSquare size={16} />
             <span>Submitted</span>
+          </button>
+
+          <button
+            className={`nav-tab ${activeTab === 'statement-imports' ? 'active' : ''}`}
+            onClick={() => navigateTo('/upi/admin/statement-imports')}
+          >
+            <FileSpreadsheet size={16} />
+            <span>Statement Imports</span>
           </button>
         </div>
       </div>
@@ -105,3 +123,5 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
     </nav>
   );
 };
+
+export default AdminNav;

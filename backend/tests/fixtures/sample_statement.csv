@@ -1,0 +1,5 @@
+Transaction Date,Transaction Type,Transaction Remarks,Credit Amount,UTR Number,Payer Name,Description
+2026-08-16 10:30:00,CREDIT,ADITYA_3210_YON2,2500,987654321098,Aditya Nair,UPI payment for batch enrollment
+2026-08-16 11:15:00,CREDIT,VIKRAM_6655_A7K2,4000,987654321099,Vikram Singh,UPI payment for course
+2026-08-16 12:00:00,CREDIT,,1500,987654321100,Rahul Verma,Payment without reference code
+2026-08-16 14:20:00,DEBIT,REF_OUT_100,500,987654321101,Vendor,Refund issued
