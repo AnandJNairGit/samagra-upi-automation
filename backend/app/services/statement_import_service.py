@@ -465,3 +465,15 @@ class StatementImportService:
             page_size=page_size,
             total_pages=total_pages,
         )
+
+    async def delete_import(self, db: AsyncSession, import_public_id: uuid.UUID) -> bool:
+        """Delete a statement import and all associated bank transactions."""
+        res = await self.import_repo.get_by_public_id(db, import_public_id)
+        if not res:
+            return False
+
+        imp, _ = res
+        await self.txn_repo.delete_by_import_id(db, imp.id)
+        await self.import_repo.delete(db, imp)
+        await db.commit()
+        return True

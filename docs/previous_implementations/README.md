@@ -16,3 +16,4 @@ This directory stores implementation plans, architectural decisions, and verific
 | **Phase 6** | UPI Payment Session + QR | [PHASE_6_IMPLEMENTATION_PLAN.md](./PHASE_6_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
 | **Phase 7** | UTR Submission & WhatsApp Notification | [PHASE_7_IMPLEMENTATION_PLAN.md](./PHASE_7_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
 | **Phase 8** | Admin Payment Dashboard | [PHASE_8_IMPLEMENTATION_PLAN.md](./PHASE_8_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |
+| **Phase 9** | Google Pay / UPI Statement Import | [PHASE_9_IMPLEMENTATION_PLAN.md](./PHASE_9_IMPLEMENTATION_PLAN.md) | Completed & Verified | August 2026 |

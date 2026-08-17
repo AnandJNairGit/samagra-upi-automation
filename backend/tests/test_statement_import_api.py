@@ -263,3 +263,50 @@ async def test_list_and_detail_import_endpoints(db_session: AsyncSession):
         t_data = txns_res.json()
         assert t_data["total"] >= 1
         assert "raw_row_data" not in t_data["items"][0]  # Omitted for privacy
+
+
+@pytest.mark.asyncio
+async def test_delete_statement_import_endpoint(db_session: AsyncSession):
+    """Test deleting an imported statement and its bank transactions."""
+    admin, token = await get_test_admin_and_token(db_session)
+    transport = ASGITransport(app=app)
+
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. Preview and confirm import
+        with open(CSV_PATH, "rb") as f:
+            p = await client.post(
+                "/v1/admin/statement-imports/preview",
+                headers={"Authorization": f"Bearer {token}"},
+                files={"file": ("sample_statement.csv", f, "text/csv")},
+                data={"header_row_index": "1"},
+            )
+        prev_token = p.json()["preview_token"]
+
+        conf_res = await client.post(
+            "/v1/admin/statement-imports/confirm",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "preview_token": prev_token,
+                "header_row_index": 1,
+                "column_mapping": {
+                    "reference_id": {"column_index": 2, "header": "Transaction Remarks"},
+                    "amount": {"column_index": 3, "header": "Credit Amount"},
+                },
+            },
+        )
+        import_public_id = conf_res.json()["import_public_id"]
+
+        # 2. Delete statement import
+        del_res = await client.delete(
+            f"/v1/admin/statement-imports/{import_public_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert del_res.status_code == 200
+        assert del_res.json()["deleted_public_id"] == import_public_id
+
+        # 3. Verify GET detail returns 404
+        get_res = await client.get(
+            f"/v1/admin/statement-imports/{import_public_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert get_res.status_code == 404

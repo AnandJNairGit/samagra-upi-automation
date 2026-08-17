@@ -20,6 +20,7 @@ import {
   ChevronRight,
   X,
   Upload,
+  Trash2,
 } from 'lucide-react';
 
 interface AdminStatementImportsPageProps {
@@ -68,6 +69,31 @@ export const AdminStatementImportsPage: React.FC<AdminStatementImportsPageProps>
   // Step 5 Result State
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [importSummary, setImportSummary] = useState<ImportSummaryResponse | null>(null);
+
+  // Delete Confirmation Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<StatementImportListItem | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const confirmDelete = (item: StatementImportListItem) => {
+    setItemToDelete(item);
+    setDeleteModalOpen(true);
+  };
+
+  const handleExecuteDelete = async () => {
+    if (!itemToDelete) return;
+    setDeleteLoading(true);
+    try {
+      await statementImportApi.deleteStatementImport(itemToDelete.public_id);
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
+      fetchHistory(page);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete statement import.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const fetchHistory = async (targetPage: number = 1) => {
     setLoading(true);
@@ -335,13 +361,23 @@ export const AdminStatementImportsPage: React.FC<AdminStatementImportsPageProps>
                       {new Date(item.created_at).toLocaleString()}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <button
-                        onClick={() => navigateTo(`/upi/admin/statement-imports/${item.public_id}`)}
-                        className="btn-action"
-                      >
-                        <FileText size={12} />
-                        <span>View Details</span>
-                      </button>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                        <button
+                          onClick={() => navigateTo(`/upi/admin/statement-imports/${item.public_id}`)}
+                          className="btn-action"
+                        >
+                          <FileText size={12} />
+                          <span>View Details</span>
+                        </button>
+                        <button
+                          onClick={() => confirmDelete(item)}
+                          className="btn-action btn-action-danger"
+                          title="Delete this statement import and all associated transactions"
+                        >
+                          <Trash2 size={12} />
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -779,6 +815,63 @@ export const AdminStatementImportsPage: React.FC<AdminStatementImportsPageProps>
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && itemToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 style={{ color: '#f87171' }}>Delete Statement Import</h3>
+              <button onClick={() => setDeleteModalOpen(false)} className="icon-btn">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <p style={{ color: '#e2e8f0', fontSize: '0.95rem', marginBottom: '12px' }}>
+                Are you sure you want to delete this imported statement file?
+              </p>
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '12px 16px', borderRadius: '8px', color: '#fca5a5', fontSize: '0.9rem', marginBottom: '16px' }}>
+                <strong>{itemToDelete.filename}</strong>
+                <div style={{ fontSize: '0.8rem', color: '#f87171', marginTop: '4px' }}>
+                  Total entries: {itemToDelete.total_rows} | New transactions: +{itemToDelete.new_transactions}
+                </div>
+              </div>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                This action will permanently delete this statement import record and all {itemToDelete.new_transactions} bank transactions recorded from it.
+              </p>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                onClick={() => setDeleteModalOpen(false)}
+                disabled={deleteLoading}
+                className="btn btn-outline"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExecuteDelete}
+                disabled={deleteLoading}
+                className="btn btn-danger-outline"
+                style={{ background: '#ef4444', color: '#ffffff', borderColor: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                {deleteLoading ? (
+                  <>
+                    <Loader2 size={16} className="spinner" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    <span>Delete Statement Import</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

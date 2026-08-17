@@ -206,27 +206,34 @@ All three containers implement automated Docker health checks:
 - `backend`: `http://localhost:8000/v1/health`
 - `frontend`: `http://localhost:80/healthz` (prod) / `http://localhost:5173/upi/` (dev)
 
-### Persistence Verification Procedure
-To verify that PostgreSQL data survives container deletion:
-```bash
-# 1. Start containers
-docker compose up -d
+---
 
-# 2. Insert test table
-docker compose exec postgres psql -U app_user -d training_payments -c \
-  "CREATE TABLE persistence_test (id serial primary key, note text); INSERT INTO persistence_test (note) VALUES ('verified');"
+## 8. Feature Modules & Implemented Phases
 
-# 3. Destroy containers
-docker compose down
+| Phase | Feature Module | Status | Highlights |
+| :--- | :--- | :--- | :--- |
+| **Phase 1** | Platform Infrastructure | Completed | Docker 3-container topology, non-root security, host Caddy integration. |
+| **Phase 2** | Database Foundation | Completed | PostgreSQL 16 schema, Alembic migrations, whole-rupee monetary types. |
+| **Phase 3** | Admin Auth & Security | Completed | Argon2id password hashing, JWT Bearer tokens, HTTP-only refresh cookies. |
+| **Phase 4** | Course & Batch Management | Completed | Course & cohort CRUD, status state machines, financial snapshot invariance. |
+| **Phase 5** | Public Registration | Completed | Public checkout registration, input validation, rate-limiting safeguards. |
+| **Phase 6** | UPI Payment Session & QR | Completed | Dynamic UPI link generation, QR codes, immutable financial snapshots. |
+| **Phase 7** | UTR Submission & WhatsApp | Completed | Unique UTR submission, row locking concurrency, WhatsApp link generation. |
+| **Phase 8** | Admin Payment Dashboard | Completed | Paginated admin dashboard, filters, submission audit history inspection. |
+| **Phase 9** | Statement Import System | Completed | Google Pay & Bank CSV/XLSX multi-sheet parser, position mapping, deduplication key calculation, null reference filtering, import deletion. |
 
-# 4. Recreate containers
-docker compose up -d
+---
 
-# 5. Verify test data still exists
-docker compose exec postgres psql -U app_user -d training_payments -c \
-  "SELECT * FROM persistence_test;"
+## 9. Statement Import System (Phase 9)
 
-# 6. Clean up test table
-docker compose exec postgres psql -U app_user -d training_payments -c \
-  "DROP TABLE persistence_test;"
-```
+The Phase 9 Statement Import system empowers administrators to upload Google Pay or bank statement export files (`.csv` and multi-sheet `.xlsx` Excel workbooks) to prepare bank transactions for reconciliation in Phase 10.
+
+### Key Capabilities:
+1. **Multi-Format Parsing**: Extracts text from `.csv` files and multi-sheet Excel workbooks (`openpyxl`).
+2. **Position-Based Column Mapping**: Maps columns using 0-based index numbers (`column_index`) to handle varying bank export column orders.
+3. **Two-Step Workflow**: Step 1 Preview generates a 30-minute preview token with zero DB writes; Step 2 Confirm processes candidate rows.
+4. **File-Independent Deduplication**: Computes SHA-256 fingerprint hashes (`source_transaction_key`) using normalized transaction data fields so duplicate rows across overlapping monthly statement files are identified and skipped.
+5. **Null Reference Row Exclusion**: Rows missing a valid Payment Reference Code are excluded from persistence and logged under `rows_without_reference`.
+6. **Import Deletion**: Delete endpoint `DELETE /v1/admin/statement-imports/{public_id}` and UI action modal permanently deletes statement imports and cascade deletes all linked bank transactions.
+7. **Accountant-Friendly UI**: Simple accounting terminology (`TOTAL ENTRIES`, `NEW TRANSACTIONS`, `SKIPPED (DUPES)`, `MISSING REF CODE`) with collapsible technical details.
+

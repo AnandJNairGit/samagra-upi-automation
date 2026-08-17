@@ -70,3 +70,8 @@ class StatementImportRepository:
         items = list(result.all())
 
         return items, total
+
+    async def delete(self, db: AsyncSession, statement_import: StatementImport) -> None:
+        """Delete a StatementImport entity."""
+        await db.delete(statement_import)
+        await db.flush()

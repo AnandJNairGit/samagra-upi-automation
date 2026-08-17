@@ -174,3 +174,35 @@ async def list_import_transactions(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to fetch import transactions.",
         ) from exc
+
+
+@router.delete(
+    "/{import_public_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Delete Statement Import & Associated Transactions",
+)
+async def delete_statement_import(
+    import_public_id: uuid.UUID,
+    current_admin: AdminUser = require_admin,
+    db: AsyncSession = Depends(get_db),
+    service: StatementImportService = Depends(get_statement_import_service),
+):
+    """Delete an imported statement record and all bank transactions associated with it."""
+    try:
+        success = await service.delete_import(db, import_public_id)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Statement import '{import_public_id}' not found.",
+            )
+        return {
+            "message": "Statement import and associated bank transactions deleted successfully.",
+            "deleted_public_id": str(import_public_id),
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to delete statement import.",
+        ) from exc

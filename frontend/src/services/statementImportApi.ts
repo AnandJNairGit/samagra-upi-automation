@@ -99,4 +99,15 @@ export const statementImportApi = {
 
     return response.json();
   },
+
+  deleteStatementImport: async (importPublicId: string): Promise<void> => {
+    const response = await apiFetch(`/v1/admin/statement-imports/${importPublicId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to delete statement import.');
+    }
+  },
 };

@@ -63,3 +63,10 @@ class BankTransactionRepository:
         items = list(result.scalars().all())
 
         return items, total
+
+    async def delete_by_import_id(self, db: AsyncSession, statement_import_id: int) -> int:
+        """Delete all BankTransaction records linked to a specific statement import."""
+        from sqlalchemy import delete
+        stmt = delete(BankTransaction).where(BankTransaction.statement_import_id == statement_import_id)
+        result = await db.execute(stmt)
+        return result.rowcount or 0

@@ -1,4 +1,4 @@
-# Database Architecture & Schema Specification (Phases 2 & 3)
+# Database Architecture & Schema Specification (Phases 1 - 9)
 
 Comprehensive technical documentation for the **Samagra UPI Automation** PostgreSQL 16 database foundation.
 
@@ -10,10 +10,12 @@ Comprehensive technical documentation for the **Samagra UPI Automation** Postgre
 erDiagram
     ADMIN_USERS ||--o{ ADMIN_SESSIONS : "authenticates"
     ADMIN_USERS ||--o{ PAYMENT_SUBMISSIONS : "reviews"
+    ADMIN_USERS ||--o{ STATEMENT_IMPORTS : "uploads"
     COURSES ||--o{ BATCHES : "contains"
     COURSES ||--o{ PAYMENT_SESSIONS : "historical reference"
     BATCHES ||--o{ PAYMENT_SESSIONS : "generates"
     PAYMENT_SESSIONS ||--o{ PAYMENT_SUBMISSIONS : "receives attempts"
+    STATEMENT_IMPORTS ||--o{ BANK_TRANSACTIONS : "contains"
 
     ADMIN_USERS {
         bigint id PK
@@ -97,6 +99,48 @@ erDiagram
         boolean is_current "Partial unique WHERE is_current=TRUE"
         timestamptz created_at
         timestamptz updated_at
+    }
+
+    STATEMENT_IMPORTS {
+        bigint id PK
+        uuid public_id UK
+        varchar filename
+        varchar file_type "csv, xlsx"
+        bigint file_size
+        varchar file_checksum_sha256
+        varchar canonical_mapping_hash
+        varchar source "GOOGLE_PAY"
+        varchar selected_sheet_name
+        int header_row_index
+        jsonb column_mapping
+        varchar status "COMPLETED, COMPLETED_WITH_ERRORS, FAILED"
+        int total_rows
+        int valid_rows
+        int invalid_rows
+        int duplicate_rows
+        int new_transactions
+        int rows_without_reference
+        jsonb error_summary
+        bigint imported_by FK "ON DELETE RESTRICT"
+        timestamptz created_at
+        timestamptz completed_at
+    }
+
+    BANK_TRANSACTIONS {
+        bigint id PK
+        uuid public_id UK
+        bigint statement_import_id FK "ON DELETE RESTRICT"
+        timestamptz transaction_at
+        bigint amount_inr "Whole rupees"
+        varchar direction "CREDIT, DEBIT"
+        varchar reference_id "Primary payment reference"
+        varchar utr "12-digit UTR"
+        varchar counterparty_name
+        text description
+        varchar source "GOOGLE_PAY"
+        varchar source_transaction_key "SHA-256 fingerprint hash"
+        jsonb raw_row_data
+        timestamptz created_at
     }
 ```
 
@@ -215,6 +259,13 @@ To maintain absolute historical financial auditability:
 | `payment_submissions`| `ix_payment_submissions_payment_session`| `payment_session_id` | Foreign Key Lookup |
 | `payment_submissions`| `ix_payment_submissions_status` | `status` | Lifecycle Filtering |
 | `payment_submissions`| `ix_payment_submissions_submitted_at`| `submitted_at` | Audit Time Ordering |
+| `statement_imports` | `ux_statement_imports_public_id` | `public_id` | Unique UUID Index |
+| `statement_imports` | `ix_statement_imports_canonical_hash` | `canonical_mapping_hash` | Exact-File Idempotency Lookup Index |
+| `bank_transactions` | `ux_bank_transactions_public_id` | `public_id` | Unique UUID Index |
+| `bank_transactions` | `ix_bank_transactions_import_id` | `statement_import_id` | Foreign Key Audit Lookup |
+| `bank_transactions` | `ix_bank_transactions_source_key` | `source, source_transaction_key` | Deduplication Fingerprint Index |
+| `bank_transactions` | `ix_bank_transactions_reference_id` | `reference_id` | Reconciliation Primary Index |
+| `bank_transactions` | `ix_bank_transactions_utr` | `utr` | Bank UTR Secondary Index |
 
 ---
 

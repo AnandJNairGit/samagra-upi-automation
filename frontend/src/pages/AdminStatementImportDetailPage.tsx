@@ -13,6 +13,8 @@ import {
   ChevronRight,
   Database,
   Hash,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 interface AdminStatementImportDetailPageProps {
@@ -86,6 +88,23 @@ export const AdminStatementImportDetailPage: React.FC<AdminStatementImportDetail
     fetchTransactions(page);
   }, [effectiveImportPublicId, page]);
 
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleExecuteDelete = async () => {
+    if (!effectiveImportPublicId) return;
+    setDeleteLoading(true);
+    try {
+      await statementImportApi.deleteStatementImport(effectiveImportPublicId);
+      navigateTo('/upi/admin/statement-imports');
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete statement import.');
+      setDeleteModalOpen(false);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="admin-page-container">
@@ -145,7 +164,7 @@ export const AdminStatementImportDetailPage: React.FC<AdminStatementImportDetail
             </p>
           </div>
 
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {detail.status === 'COMPLETED' ? (
               <span className="status-pill active-pill">✓ Import Successful</span>
             ) : detail.status === 'COMPLETED_WITH_ERRORS' ? (
@@ -153,6 +172,15 @@ export const AdminStatementImportDetailPage: React.FC<AdminStatementImportDetail
             ) : (
               <span className="status-pill archived-pill">{detail.status}</span>
             )}
+            <button
+              onClick={() => setDeleteModalOpen(true)}
+              className="btn btn-sm btn-danger-outline"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              title="Delete this statement import and all its associated transactions"
+            >
+              <Trash2 size={14} />
+              <span>Delete Import</span>
+            </button>
           </div>
         </div>
 
@@ -323,6 +351,63 @@ export const AdminStatementImportDetailPage: React.FC<AdminStatementImportDetail
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 style={{ color: '#f87171' }}>Delete Statement Import</h3>
+              <button onClick={() => setDeleteModalOpen(false)} className="icon-btn">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <p style={{ color: '#e2e8f0', fontSize: '0.95rem', marginBottom: '12px' }}>
+                Are you sure you want to delete this imported statement file?
+              </p>
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '12px 16px', borderRadius: '8px', color: '#fca5a5', fontSize: '0.9rem', marginBottom: '16px' }}>
+                <strong>{detail.filename}</strong>
+                <div style={{ fontSize: '0.8rem', color: '#f87171', marginTop: '4px' }}>
+                  Total entries: {detail.total_rows} | New transactions created: +{detail.new_transactions}
+                </div>
+              </div>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                This action will permanently delete this statement import record and all {detail.new_transactions} bank transactions recorded from it.
+              </p>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                onClick={() => setDeleteModalOpen(false)}
+                disabled={deleteLoading}
+                className="btn btn-outline"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExecuteDelete}
+                disabled={deleteLoading}
+                className="btn btn-danger-outline"
+                style={{ background: '#ef4444', color: '#ffffff', borderColor: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                {deleteLoading ? (
+                  <>
+                    <Loader2 size={16} className="spinner" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    <span>Delete Statement Import</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
