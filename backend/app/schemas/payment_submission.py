@@ -21,7 +21,7 @@ class PaymentSubmissionCreate(BaseModel):
 
 
 class PaymentSubmissionResponse(BaseModel):
-    """Public representation of a payment submission."""
+    """Internal/Admin representation of a payment submission."""
 
     public_id: uuid.UUID
     utr: str
@@ -34,3 +34,47 @@ class PaymentSubmissionResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PublicUTRSubmitRequest(BaseModel):
+    """Public schema for participant UTR submission.
+
+    Strict Invariants:
+        - extra='forbid' prevents client from injecting amounts, statuses, or IDs.
+        - Minimum length 4 characters, maximum 100 characters.
+        - Trims whitespace and forbids empty or blank string.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    utr: str = Field(
+        ...,
+        min_length=4,
+        max_length=100,
+        description="Bank / UPI transaction reference (UTR) number",
+    )
+
+    @field_validator("utr")
+    @classmethod
+    def validate_utr(cls, v: str) -> str:
+        clean = v.strip()
+        if not clean:
+            raise ValueError("Transaction reference (UTR) cannot be empty or whitespace only.")
+        if len(clean) < 4:
+            raise ValueError("Transaction reference (UTR) must be at least 4 characters long.")
+        if len(clean) > 100:
+            raise ValueError("Transaction reference (UTR) cannot exceed 100 characters.")
+        return clean
+
+
+class PublicUTRSubmitResponse(BaseModel):
+    """Public response returned upon successful UTR submission."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    payment_session_public_id: uuid.UUID
+    submission_public_id: uuid.UUID
+    status: str
+    utr_masked: str
+    submitted_at: datetime
+    whatsapp_url: str

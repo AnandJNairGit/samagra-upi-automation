@@ -8,6 +8,7 @@ import {
   PaymentSessionPublic,
   PublicBatch,
   PublicRegistrationContext,
+  UTRSubmissionResponse,
 } from '../types/public';
 
 /**
@@ -117,6 +118,37 @@ export async function fetchPaymentSession(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.detail || 'This payment session is no longer available.');
+  }
+
+  return response.json();
+}
+
+/**
+ * Submit UTR / transaction reference number for an active payment session (Phase 7).
+ */
+export async function submitPaymentSessionUTR(
+  paymentSessionPublicId: string,
+  utr: string,
+): Promise<UTRSubmissionResponse> {
+  const url = `${config.apiBaseUrl}/v1/public/payment-sessions/${paymentSessionPublicId}/submissions`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      utr: utr.trim(),
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    if (errorData.detail && Array.isArray(errorData.detail)) {
+      const firstError = errorData.detail[0];
+      throw new Error(firstError?.msg || 'Invalid transaction reference provided.');
+    }
+    throw new Error(errorData.detail || 'Unable to submit transaction reference. Please try again.');
   }
 
   return response.json();

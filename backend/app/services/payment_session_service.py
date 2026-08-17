@@ -10,6 +10,7 @@ from app.core.logging import logger
 from app.models.payment_session import PaymentSession
 from app.repositories.batch_repository import BatchRepository
 from app.repositories.payment_session_repository import PaymentSessionRepository
+from app.repositories.payment_submission_repository import PaymentSubmissionRepository
 from app.schemas.payment_session import (
     PaymentSessionCreateRequest,
     PaymentSessionPublicResponse,
@@ -28,9 +29,11 @@ class PaymentSessionService:
         self,
         session_repo: Optional[PaymentSessionRepository] = None,
         batch_repo: Optional[BatchRepository] = None,
+        submission_repo: Optional[PaymentSubmissionRepository] = None,
     ) -> None:
         self.session_repo = session_repo or PaymentSessionRepository()
         self.batch_repo = batch_repo or BatchRepository()
+        self.submission_repo = submission_repo or PaymentSubmissionRepository()
 
     async def create_payment_session(
         self,
@@ -136,4 +139,8 @@ class PaymentSessionService:
             logger.info(f"PAYMENT_SESSION_LOOKUP_FAILED: Session [{session_public_id}] not found.")
             raise PaymentSessionUnavailableError("This payment session is no longer available.")
 
-        return PaymentSessionPublicResponse.from_orm_model(session)
+        current_submission = None
+        if session.status == "SUBMITTED":
+            current_submission = await self.submission_repo.get_current_for_session(db, session.id)
+
+        return PaymentSessionPublicResponse.from_orm_model(session, current_submission=current_submission)

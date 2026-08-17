@@ -1,5 +1,5 @@
 /**
- * Public UPI Payment Page (Phase 6).
+ * Public UPI Payment Page (Phases 6 & 7).
  * Route: /upi/payment/:paymentSessionPublicId
  */
 
@@ -9,6 +9,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Check,
+  CheckCircle2,
   Clock,
   Copy,
   ExternalLink,
@@ -17,11 +18,13 @@ import {
   Info,
   Loader2,
   Lock,
+  MessageCircle,
   QrCode,
+  Send,
   ShieldCheck,
   User,
 } from 'lucide-react';
-import { fetchPaymentSession } from '../services/publicApi';
+import { fetchPaymentSession, submitPaymentSessionUTR } from '../services/publicApi';
 import { PaymentSessionPublic } from '../types/public';
 
 interface PublicPaymentPageProps {
@@ -37,6 +40,11 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
   const [session, setSession] = useState<PaymentSessionPublic | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<'ref' | 'upi' | null>(null);
+
+  // UTR Submission Form state (Phase 7)
+  const [utrInput, setUtrInput] = useState<string>('');
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -99,6 +107,54 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
     }
   };
 
+  const handleUTRSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanUTR = utrInput.trim();
+    if (!cleanUTR) {
+      setSubmitError('Please enter your 12-digit transaction reference (UTR) number.');
+      return;
+    }
+    if (cleanUTR.length < 4) {
+      setSubmitError('Transaction reference (UTR) must be at least 4 characters long.');
+      return;
+    }
+
+    if (!session) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const response = await submitPaymentSessionUTR(session.public_id, cleanUTR);
+
+      // Update session state to SUBMITTED
+      setSession((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          status: 'SUBMITTED',
+          utr_masked: response.utr_masked,
+          submitted_at: response.submitted_at,
+          whatsapp_url: response.whatsapp_url,
+          submission_public_id: response.submission_public_id,
+        };
+      });
+
+      // Attempt to open WhatsApp in a new tab
+      if (response.whatsapp_url) {
+        try {
+          window.open(response.whatsapp_url, '_blank', 'noopener,noreferrer');
+        } catch {
+          // Graceful fallback: manual button remains available
+        }
+      }
+    } catch (err: any) {
+      setSubmitError(err.message || 'Unable to submit payment reference. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // 1. Loading State
   if (loading) {
     return (
@@ -109,7 +165,7 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
             Loading Payment Checkout
           </h2>
           <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-            Generating dynamic UPI QR code and payment reference...
+            Retrieving payment session details...
           </p>
         </div>
       </div>
@@ -155,7 +211,10 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
     return (
       <div className="public-container">
         <div className="public-card unavailable-card">
-          <div className="icon-badge-danger" style={{ background: 'rgba(245, 158, 11, 0.12)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
+          <div
+            className="icon-badge-danger"
+            style={{ background: 'rgba(245, 158, 11, 0.12)', borderColor: 'rgba(245, 158, 11, 0.3)' }}
+          >
             <Clock size={32} color="#f59e0b" />
           </div>
           <h1 className="unavailable-title" style={{ color: '#fbbf24' }}>
@@ -193,7 +252,9 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
     );
   }
 
-  // 4. Active UPI Payment Page
+  const isSubmitted = session.status === 'SUBMITTED';
+
+  // 4. Active UPI Payment & UTR Submission Page
   return (
     <div className="public-container">
       <div className="public-card payment-checkout-card">
@@ -208,10 +269,17 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
               <span className="brand-tagline">Secure UPI Payment Checkout</span>
             </div>
           </div>
-          <div className="status-pill active-pill" style={{ fontSize: '0.75rem', padding: '4px 10px' }}>
-            <Clock size={12} />
-            <span>Awaiting Payment</span>
-          </div>
+          {isSubmitted ? (
+            <div className="status-pill status-pill-submitted">
+              <CheckCircle2 size={13} color="#10b981" />
+              <span>Payment Submitted</span>
+            </div>
+          ) : (
+            <div className="status-pill active-pill" style={{ fontSize: '0.75rem', padding: '4px 10px' }}>
+              <Clock size={12} />
+              <span>Awaiting Payment</span>
+            </div>
+          )}
         </header>
 
         {/* Program & Participant Context */}
@@ -239,7 +307,7 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
           <span className="amount-val-hero">{formatINR(session.amount_inr)}</span>
         </div>
 
-        {/* Large Dynamic UPI QR Code */}
+        {/* Dynamic UPI QR Code */}
         <div className="qr-code-section">
           <div className="qr-code-wrapper">
             <QRCodeSVG
@@ -345,8 +413,140 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
               Complete the payment. Keep your <strong>12-digit UPI Reference (UTR) number</strong>{' '}
               safe from your transaction receipt.
             </li>
+            <li>
+              Enter the UTR number below to submit your payment details for verification.
+            </li>
           </ol>
         </div>
+
+        {/* ========================================================================= */}
+        {/* PHASE 7: UTR SUBMISSION & WHATSAPP NOTIFICATION SECTION                    */}
+        {/* ========================================================================= */}
+        {isSubmitted ? (
+          <div className="submitted-confirmation-card">
+            <div className="submitted-icon-badge">
+              <CheckCircle2 size={36} color="#10b981" />
+            </div>
+            <h2 className="submitted-title">Payment Details Submitted</h2>
+            <p className="submitted-subtitle">
+              Your transaction reference has been successfully submitted and is awaiting administrator verification.
+            </p>
+
+            <div className="submitted-meta-grid">
+              <div className="submitted-meta-item">
+                <span className="submitted-meta-label">Transaction Reference (UTR)</span>
+                <span className="submitted-meta-val monospace font-bold">
+                  {session.utr_masked || '••••'}
+                </span>
+              </div>
+              <div className="submitted-meta-item">
+                <span className="submitted-meta-label">Verification Status</span>
+                <span className="submitted-meta-val status-tag-submitted">
+                  SUBMITTED (Pending Review)
+                </span>
+              </div>
+              {session.submitted_at && (
+                <div className="submitted-meta-item submitted-meta-full">
+                  <span className="submitted-meta-label">Submission Timestamp</span>
+                  <span className="submitted-meta-val">
+                    {new Date(session.submitted_at).toLocaleString('en-IN', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="verification-notice-box">
+              <Info size={16} color="#38bdf8" />
+              <span>
+                Your payment will be manually verified against institutional bank records. Once verified,
+                you will receive enrollment confirmation.
+              </span>
+            </div>
+
+            {session.whatsapp_url && (
+              <div className="whatsapp-action-container">
+                <a
+                  href={session.whatsapp_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-whatsapp"
+                >
+                  <MessageCircle size={18} />
+                  <span>Notify Administrator on WhatsApp</span>
+                </a>
+                <p className="whatsapp-action-note">
+                  Click above to open WhatsApp with your pre-filled payment details to notify the administrator.
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="utr-form-section">
+            <div className="utr-form-header">
+              <div className="utr-step-badge">Step 2</div>
+              <div>
+                <h3 className="utr-form-title">Submit Transaction Reference (UTR)</h3>
+                <p className="utr-form-subtitle">
+                  After completing your UPI payment, enter the 12-digit transaction reference number to submit.
+                </p>
+              </div>
+            </div>
+
+            {submitError && (
+              <div className="form-error-banner" style={{ marginBottom: '1rem' }}>
+                <AlertCircle size={16} />
+                <span>{submitError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleUTRSubmit} className="utr-form">
+              <div className="form-group">
+                <label className="form-label" htmlFor="utrInput">
+                  UPI Reference / UTR Number <span className="required-star">*</span>
+                </label>
+                <input
+                  id="utrInput"
+                  type="text"
+                  className={`form-input monospace ${submitError ? 'input-error' : ''}`}
+                  placeholder="e.g. 123456789012"
+                  value={utrInput}
+                  onChange={(e) => {
+                    setUtrInput(e.target.value);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  disabled={submitting}
+                  maxLength={100}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <span className="form-hint">
+                  Found on your transaction confirmation screen in Google Pay, PhonePe, Paytm, or BHIM.
+                </span>
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary btn-submit-utr"
+                disabled={submitting || !utrInput.trim()}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={16} className="spinner" />
+                    <span>Submitting Reference...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    <span>Submit Payment Reference</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        )}
 
         <div className="security-footer" style={{ marginTop: '1.5rem' }}>
           <Lock size={13} />

@@ -1,5 +1,5 @@
 /**
- * TypeScript types for Public Registration and UPI Payment Checkout (Phase 5 & 6).
+ * TypeScript types for Public Registration, UPI Payment Checkout, and UTR Submission (Phases 5, 6 & 7).
  */
 
 export interface PublicBatch {
@@ -43,6 +43,25 @@ export interface PaymentSessionPublic {
   expires_at?: string | null;
   is_expired?: boolean;
   created_at: string;
+
+  // Phase 7 Submission & WhatsApp Metadata
+  submission_public_id?: string | null;
+  utr_masked?: string | null;
+  submitted_at?: string | null;
+  whatsapp_url?: string | null;
+}
+
+export interface UTRSubmissionRequest {
+  utr: string;
+}
+
+export interface UTRSubmissionResponse {
+  payment_session_public_id: string;
+  submission_public_id: string;
+  status: string;
+  utr_masked: string;
+  submitted_at: string;
+  whatsapp_url: string;
 }
 
 export interface FormErrors {

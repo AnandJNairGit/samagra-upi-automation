@@ -1,15 +1,19 @@
 """Payment submission service managing workflows, concurrency locking, and status synchronization."""
 
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.payment_session import PaymentSession
 from app.models.payment_submission import PaymentSubmission
 from app.repositories.payment_session_repository import PaymentSessionRepository
 from app.repositories.payment_submission_repository import PaymentSubmissionRepository
 from app.services.exceptions import (
     DuplicateUTRError,
     InvalidSessionStateError,
+    PaymentSessionExpiredError,
+    PaymentSessionUnavailableError,
     SessionNotFoundError,
     SubmissionNotFoundError,
 )
@@ -25,6 +29,76 @@ class PaymentSubmissionService:
     ):
         self.session_repo = session_repo or PaymentSessionRepository()
         self.submission_repo = submission_repo or PaymentSubmissionRepository()
+
+    async def submit_utr_by_public_id(
+        self,
+        db: AsyncSession,
+        payment_session_public_id: uuid.UUID,
+        utr: str,
+    ) -> tuple[PaymentSession, PaymentSubmission]:
+        """Submit a UTR for a payment session identified by public UUID with concurrency row locking (SELECT FOR UPDATE)."""
+        clean_utr = utr.strip()
+        if not clean_utr:
+            raise ValueError("Transaction reference (UTR) cannot be empty or whitespace only.")
+        if len(clean_utr) < 4:
+            raise ValueError("Transaction reference (UTR) must be at least 4 characters long.")
+        if len(clean_utr) > 100:
+            raise ValueError("Transaction reference (UTR) cannot exceed 100 characters.")
+
+        # 1. Lock payment session row via SELECT ... FOR UPDATE
+        payment_session = await self.session_repo.get_by_public_id_for_update(
+            db, payment_session_public_id
+        )
+        if not payment_session:
+            raise PaymentSessionUnavailableError("This payment session is no longer available.")
+
+        # 2. Check if session has expired
+        now_utc = datetime.now(timezone.utc)
+        if (
+            payment_session.expires_at
+            and payment_session.expires_at < now_utc
+            and payment_session.status == "PENDING"
+        ):
+            raise PaymentSessionExpiredError("This payment session has expired.")
+
+        # 3. Validate legal transition: only PENDING or REJECTED sessions can accept UTR submissions
+        if payment_session.status not in ("PENDING", "REJECTED"):
+            if payment_session.status == "SUBMITTED":
+                raise InvalidSessionStateError(
+                    current_status=payment_session.status,
+                    action="submit_utr",
+                    message="Payment details for this session have already been submitted.",
+                )
+            raise InvalidSessionStateError(
+                current_status=payment_session.status,
+                action="submit_utr",
+            )
+
+        # 4. Deactivate existing current submission for this session
+        await self.submission_repo.deactivate_current_for_session(db, payment_session.id)
+
+        # 5. Create new current submission with server-generated submitted_at
+        new_submission = PaymentSubmission(
+            payment_session_id=payment_session.id,
+            utr=clean_utr,
+            status="SUBMITTED",
+            is_current=True,
+            submitted_at=now_utc,
+        )
+
+        try:
+            await self.submission_repo.create(db, new_submission)
+        except IntegrityError as exc:
+            # Check if failure is due to UTR uniqueness constraint
+            if "ux_payment_submissions_utr" in str(exc) or "utr" in str(exc).lower():
+                raise DuplicateUTRError(clean_utr) from exc
+            raise
+
+        # 6. Synchronize payment session status to SUBMITTED
+        payment_session.status = "SUBMITTED"
+        await self.session_repo.update(db, payment_session)
+
+        return payment_session, new_submission
 
     async def submit_utr(
         self,

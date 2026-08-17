@@ -79,11 +79,41 @@ class PaymentSessionPublicResponse(BaseModel):
     is_expired: bool = False
     created_at: datetime
 
+    # Phase 7 Submission & WhatsApp Metadata
+    submission_public_id: Optional[uuid.UUID] = None
+    utr_masked: Optional[str] = None
+    submitted_at: Optional[datetime] = None
+    whatsapp_url: Optional[str] = None
+
     @classmethod
-    def from_orm_model(cls, model) -> "PaymentSessionPublicResponse":
+    def from_orm_model(cls, model, current_submission=None) -> "PaymentSessionPublicResponse":
         """Construct public response from SQLAlchemy PaymentSession model instance."""
         now = datetime.now(timezone.utc)
         expired = bool(model.expires_at and model.expires_at < now and model.status == "PENDING")
+
+        submission_public_id = None
+        utr_masked = None
+        submitted_at = None
+        whatsapp_url = None
+
+        if current_submission:
+            from app.core.config import settings
+            from app.services.whatsapp_service import build_whatsapp_admin_url, mask_utr
+
+            submission_public_id = current_submission.public_id
+            utr_masked = mask_utr(current_submission.utr)
+            submitted_at = current_submission.submitted_at
+            whatsapp_url = build_whatsapp_admin_url(
+                admin_phone=settings.ADMIN_WHATSAPP_NUMBER,
+                full_name=model.full_name,
+                phone=model.phone,
+                email=model.email,
+                course_name=model.course_name_snapshot,
+                batch_name=model.batch_name_snapshot,
+                amount_inr=model.amount_inr,
+                reference_id=model.reference_id,
+                utr=current_submission.utr,
+            )
 
         return cls(
             public_id=model.public_id,
@@ -101,4 +131,8 @@ class PaymentSessionPublicResponse(BaseModel):
             expires_at=model.expires_at,
             is_expired=expired,
             created_at=model.created_at,
+            submission_public_id=submission_public_id,
+            utr_masked=utr_masked,
+            submitted_at=submitted_at,
+            whatsapp_url=whatsapp_url,
         )

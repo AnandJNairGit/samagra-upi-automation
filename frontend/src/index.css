@@ -1609,3 +1609,227 @@ body {
   font-family: monospace;
 }
 
+/* ========================================================================= */
+/* PHASE 7: UTR SUBMISSION & WHATSAPP NOTIFICATION STYLES                    */
+/* ========================================================================= */
+
+.status-pill.status-pill-submitted {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.utr-form-section {
+  margin-top: 24px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.utr-form-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.utr-step-badge {
+  background: #6366f1;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.utr-form-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #f8fafc;
+  margin-bottom: 4px;
+}
+
+.utr-form-subtitle {
+  font-size: 0.825rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.utr-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.btn-submit-utr {
+  width: 100%;
+  padding: 13px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-submit-utr:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Submitted State Card */
+.submitted-confirmation-card {
+  margin-top: 24px;
+  background: rgba(6, 78, 59, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 18px;
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.submitted-icon-badge {
+  width: 60px;
+  height: 60px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.submitted-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #34d399;
+  margin-bottom: 6px;
+}
+
+.submitted-subtitle {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.submitted-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  text-align: left;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 480px) {
+  .submitted-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.submitted-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.submitted-meta-full {
+  grid-column: 1 / -1;
+}
+
+.submitted-meta-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.submitted-meta-val {
+  font-size: 0.9rem;
+  color: #e2e8f0;
+}
+
+.status-tag-submitted {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.verification-notice-box {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.825rem;
+  color: #bae6fd;
+  text-align: left;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.whatsapp-action-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-whatsapp {
+  width: 100%;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-whatsapp:hover {
+  background: linear-gradient(135deg, #2ee570, #159b8c);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
+  transform: translateY(-1px);
+}
+
+.whatsapp-action-note {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  max-width: 90%;
+  margin: 0;
+}
+

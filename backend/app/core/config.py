@@ -81,6 +81,10 @@ class Settings(BaseSettings):
         default=30,
         description="Payment session validity in minutes. Set to 0 to disable expiration.",
     )
+    ADMIN_WHATSAPP_NUMBER: str = Field(
+        default="919876543210",
+        description="Administrator WhatsApp phone number with country code (digits only) for notification deep links",
+    )
 
     @field_validator("JWT_SECRET_KEY", mode="after")
     @classmethod

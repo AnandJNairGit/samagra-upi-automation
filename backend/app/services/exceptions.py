@@ -20,10 +20,9 @@ class DuplicateUTRError(DomainError):
 class InvalidSessionStateError(DomainError):
     """Raised when a state transition is not allowed for the payment session."""
 
-    def __init__(self, current_status: str, action: str):
-        super().__init__(
-            f"Cannot perform action '{action}' on payment session with status '{current_status}'."
-        )
+    def __init__(self, current_status: str, action: str, message: str = ""):
+        msg = message or f"Cannot perform action '{action}' on payment session with status '{current_status}'."
+        super().__init__(msg)
         self.current_status = current_status
         self.action = action
 

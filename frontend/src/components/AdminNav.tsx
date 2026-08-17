@@ -4,13 +4,15 @@ import {
   LayoutDashboard,
   BookOpen,
   Layers,
+  CreditCard,
+  CheckSquare,
   LogOut,
   User,
   ShieldCheck,
 } from 'lucide-react';
 
 interface AdminNavProps {
-  activeTab: 'dashboard' | 'courses' | 'batches';
+  activeTab: 'dashboard' | 'courses' | 'batches' | 'payments' | 'submitted';
   onNavigate: (path: string) => void;
 }
 
@@ -48,6 +50,7 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
             <LayoutDashboard size={16} />
             <span>Dashboard</span>
           </button>
+
           <button
             className={`nav-tab ${activeTab === 'courses' ? 'active' : ''}`}
             onClick={() => onNavigate('/upi/admin/courses')}
@@ -55,12 +58,29 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
             <BookOpen size={16} />
             <span>Courses</span>
           </button>
+
           <button
             className={`nav-tab ${activeTab === 'batches' ? 'active' : ''}`}
             onClick={() => onNavigate('/upi/admin/batches')}
           >
             <Layers size={16} />
             <span>Batches</span>
+          </button>
+
+          <button
+            className={`nav-tab ${activeTab === 'payments' ? 'active' : ''}`}
+            onClick={() => onNavigate('/upi/admin/payments')}
+          >
+            <CreditCard size={16} />
+            <span>Payments</span>
+          </button>
+
+          <button
+            className={`nav-tab ${activeTab === 'submitted' ? 'active' : ''}`}
+            onClick={() => onNavigate('/upi/admin/payments/submitted')}
+          >
+            <CheckSquare size={16} />
+            <span>Submitted</span>
           </button>
         </div>
       </div>

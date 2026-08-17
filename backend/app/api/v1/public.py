@@ -5,10 +5,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.dependencies import get_client_ip
 from app.auth.rate_limiter import auth_rate_limiter
+from app.core.config import settings
 from app.core.database import get_db
 from app.schemas.payment_session import (
     PaymentSessionCreateRequest,
     PaymentSessionPublicResponse,
+)
+from app.schemas.payment_submission import (
+    PublicUTRSubmitRequest,
+    PublicUTRSubmitResponse,
 )
 from app.schemas.public import (
     PublicBatchResponse,
@@ -16,12 +21,17 @@ from app.schemas.public import (
     PublicRegistrationValidateResponse,
 )
 from app.services.exceptions import (
+    DuplicateUTRError,
+    InvalidSessionStateError,
     ParticipantValidationError,
+    PaymentSessionExpiredError,
     PaymentSessionUnavailableError,
     PublicBatchUnavailableError,
 )
 from app.services.payment_session_service import PaymentSessionService
+from app.services.payment_submission_service import PaymentSubmissionService
 from app.services.public_registration_service import PublicRegistrationService
+from app.services.whatsapp_service import build_whatsapp_admin_url, mask_utr
 
 router = APIRouter()
 
@@ -34,6 +44,11 @@ def get_public_registration_service() -> PublicRegistrationService:
 def get_payment_session_service() -> PaymentSessionService:
     """Dependency injector for PaymentSessionService."""
     return PaymentSessionService()
+
+
+def get_payment_submission_service() -> PaymentSubmissionService:
+    """Dependency injector for PaymentSubmissionService."""
+    return PaymentSubmissionService()
 
 
 @router.get(
@@ -202,4 +217,99 @@ async def get_public_payment_session(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=exc.message,
+        ) from exc
+
+
+@router.post(
+    "/payment-sessions/{payment_session_public_id}/submissions",
+    response_model=PublicUTRSubmitResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Submit UPI Transaction Reference (UTR)",
+)
+async def submit_public_utr(
+    payment_session_public_id: uuid.UUID,
+    payload: PublicUTRSubmitRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    service: PaymentSubmissionService = Depends(get_payment_submission_service),
+):
+    """Submit participant UTR for an active payment session and generate admin WhatsApp link.
+
+    Phase 7 Boundary:
+        - Locks payment session via SELECT ... FOR UPDATE.
+        - Validates session state (PENDING / REJECTED only).
+        - Creates PaymentSubmission record with status SUBMITTED.
+        - Synchronizes PaymentSession status to SUBMITTED.
+        - Server generates submitted_at timestamp.
+        - Returns masked UTR and pre-filled WhatsApp deep link for the administrator.
+        - Does NOT auto-approve, reconcile, or send background WhatsApp messages.
+    """
+    client_ip = get_client_ip(request) or "unknown"
+
+    # Rate limiting: Max 10 UTR submission attempts per 60 seconds per IP + session_id
+    rate_key = f"utr_submit:{client_ip}:{payment_session_public_id}"
+    allowed, retry_after = auth_rate_limiter.check(rate_key, max_requests=10, window_seconds=60)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many submission attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    try:
+        session, submission = await service.submit_utr_by_public_id(
+            db=db,
+            payment_session_public_id=payment_session_public_id,
+            utr=payload.utr,
+        )
+
+        whatsapp_url = build_whatsapp_admin_url(
+            admin_phone=settings.ADMIN_WHATSAPP_NUMBER,
+            full_name=session.full_name,
+            phone=session.phone,
+            email=session.email,
+            course_name=session.course_name_snapshot,
+            batch_name=session.batch_name_snapshot,
+            amount_inr=session.amount_inr,
+            reference_id=session.reference_id,
+            utr=submission.utr,
+        )
+
+        return PublicUTRSubmitResponse(
+            payment_session_public_id=session.public_id,
+            submission_public_id=submission.public_id,
+            status=submission.status,
+            utr_masked=mask_utr(submission.utr),
+            submitted_at=submission.submitted_at,
+            whatsapp_url=whatsapp_url,
+        )
+    except DuplicateUTRError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This transaction reference has already been submitted.",
+        ) from exc
+    except InvalidSessionStateError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=exc.message,
+        ) from exc
+    except PaymentSessionUnavailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=exc.message,
+        ) from exc
+    except PaymentSessionExpiredError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=exc.message,
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to process payment submission. Please try again.",
         ) from exc

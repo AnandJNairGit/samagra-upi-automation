@@ -5,6 +5,9 @@ import { AdminLoginPage } from '../pages/AdminLoginPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
 import { AdminCoursesPage } from '../pages/AdminCoursesPage';
 import { AdminBatchesPage } from '../pages/AdminBatchesPage';
+import { AdminPaymentsPage } from '../pages/AdminPaymentsPage';
+import { AdminSubmittedPaymentsPage } from '../pages/AdminSubmittedPaymentsPage';
+import { AdminPaymentDetailPage } from '../pages/AdminPaymentDetailPage';
 import { PublicRegistrationPage } from '../pages/PublicRegistrationPage';
 import { PublicPaymentPage } from '../pages/PublicPaymentPage';
 import { HealthStatus } from '../components/HealthStatus';
@@ -57,6 +60,37 @@ const AppContent: React.FC = () => {
     );
   }
 
+  // 3.1 Admin Protected Submitted Payments Shortcut (/upi/admin/payments/submitted)
+  if (isPath('/upi/admin/payments/submitted') || isPath('/admin/payments/submitted')) {
+    const searchParams = Object.fromEntries(new URLSearchParams(window.location.search));
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminSubmittedPaymentsPage onNavigate={navigate} searchParams={searchParams} />
+      </ProtectedRoute>
+    );
+  }
+
+  // 3.2 Admin Protected Payment Detail Route (/upi/admin/payments/:paymentSessionPublicId)
+  const adminPaymentDetailMatch = currentPath.match(/^(?:\/upi)?\/admin\/payments\/([a-fA-F0-9-]{36})\/?$/);
+  if (adminPaymentDetailMatch) {
+    const paymentSessionPublicId = adminPaymentDetailMatch[1];
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminPaymentDetailPage paymentSessionPublicId={paymentSessionPublicId} onNavigate={navigate} />
+      </ProtectedRoute>
+    );
+  }
+
+  // 3.3 Admin Protected Payments List Route (/upi/admin/payments)
+  if (isPath('/upi/admin/payments') || isPath('/admin/payments')) {
+    const searchParams = Object.fromEntries(new URLSearchParams(window.location.search));
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminPaymentsPage onNavigate={navigate} searchParams={searchParams} />
+      </ProtectedRoute>
+    );
+  }
+
   // 4. Admin Protected Dashboard Root (/upi/admin or /admin)
   if (isPath('/upi/admin') || isPath('/admin')) {
     return (
@@ -87,7 +121,7 @@ const AppContent: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div className="badge">
             <ShieldCheck size={14} />
-            Phase 6 — UPI Payment Session + QR
+            Phase 7 — UTR Submission + WhatsApp
           </div>
           <div>
             {isAuthenticated ? (
@@ -168,7 +202,7 @@ const AppContent: React.FC = () => {
       </main>
 
       <footer className="footer">
-        <p>Samagra UPI Automation Platform &bull; Phase 4 Verified</p>
+        <p>Samagra UPI Automation Platform &bull; Phase 7 Verified</p>
       </footer>
     </div>
   );

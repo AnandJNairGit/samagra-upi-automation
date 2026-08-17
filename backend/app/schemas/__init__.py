@@ -22,8 +22,16 @@ from app.schemas.payment_session import (
 from app.schemas.payment_submission import (
     PaymentSubmissionCreate,
     PaymentSubmissionResponse,
+    PublicUTRSubmitRequest,
+    PublicUTRSubmitResponse,
 )
 
+from app.schemas.admin_payment import (
+    AdminDashboardSummaryResponse,
+    AdminPaymentDetailResponse,
+    AdminPaymentListItem,
+    AdminPaymentListResponse,
+)
 from app.schemas.auth import (
     AdminHealthResponse,
     AdminProfileResponse,
@@ -54,7 +62,13 @@ __all__ = [
     "PaymentSessionPublicResponse",
     "PaymentSubmissionCreate",
     "PaymentSubmissionResponse",
+    "PublicUTRSubmitRequest",
+    "PublicUTRSubmitResponse",
     "PublicBatchResponse",
     "PublicRegistrationValidateRequest",
     "PublicRegistrationValidateResponse",
+    "AdminDashboardSummaryResponse",
+    "AdminPaymentListItem",
+    "AdminPaymentListResponse",
+    "AdminPaymentDetailResponse",
 ]
