@@ -4,3 +4,18 @@ deeply analyse all the previous phases implemented in @docs/previous_implementat
 Login URL: http://localhost:5173/upi/admin/login
 Email: admin@example.com
 Password: adminpassword123
+
+
+
+Primary Admin Accounts
+
+Email: admin@samagra.org
+Password: dev_admin_password_123!
+Name: Samagra Dev Admin
+
+
+2. Development Admin Account (admin@example.com)
+
+Email: admin@example.com
+Password: dev_admin_password_123!
+Name: Development Admin

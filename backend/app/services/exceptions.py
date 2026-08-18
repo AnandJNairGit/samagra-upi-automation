@@ -161,3 +161,27 @@ class PaymentSessionExpiredError(DomainError):
     def __init__(self, message: str = "This payment session has expired."):
         super().__init__(message)
 
+
+class ReconciliationRunNotFoundError(DomainError):
+    """Raised when a reconciliation run is not found."""
+
+    def __init__(self, identifier: str):
+        super().__init__(f"Reconciliation run '{identifier}' was not found.")
+        self.identifier = identifier
+
+
+class ReconciliationResultNotFoundError(DomainError):
+    """Raised when a reconciliation result is not found."""
+
+    def __init__(self, identifier: str):
+        super().__init__(f"Reconciliation result '{identifier}' was not found.")
+        self.identifier = identifier
+
+
+class StatementImportNotReadyError(DomainError):
+    """Raised when a statement import is not found or not ready for reconciliation."""
+
+    def __init__(self, message: str = "Statement import is not ready for reconciliation."):
+        super().__init__(message)
+
+

@@ -9,6 +9,8 @@ from app.models.payment_session import PaymentSession
 from app.models.payment_submission import PaymentSubmission
 from app.models.statement_import import StatementImport
 from app.models.bank_transaction import BankTransaction
+from app.models.reconciliation_run import ReconciliationRun
+from app.models.reconciliation_result import ReconciliationResult
 
 __all__ = [
     "Base",
@@ -20,4 +22,7 @@ __all__ = [
     "PaymentSubmission",
     "StatementImport",
     "BankTransaction",
+    "ReconciliationRun",
+    "ReconciliationResult",
 ]
+

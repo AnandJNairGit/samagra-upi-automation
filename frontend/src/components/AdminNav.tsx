@@ -7,13 +7,14 @@ import {
   CreditCard,
   CheckSquare,
   FileSpreadsheet,
+  GitCompare,
   LogOut,
   User,
   ShieldCheck,
 } from 'lucide-react';
 
 interface AdminNavProps {
-  activeTab?: 'dashboard' | 'courses' | 'batches' | 'payments' | 'submitted' | 'statement-imports';
+  activeTab?: 'dashboard' | 'courses' | 'batches' | 'payments' | 'submitted' | 'statement-imports' | 'reconciliation';
   onNavigate?: (path: string) => void;
 }
 
@@ -100,8 +101,17 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
             <FileSpreadsheet size={16} />
             <span>Statement Imports</span>
           </button>
+
+          <button
+            className={`nav-tab ${activeTab === 'reconciliation' ? 'active' : ''}`}
+            onClick={() => navigateTo('/upi/admin/reconciliation')}
+          >
+            <GitCompare size={16} />
+            <span>Reconciliation</span>
+          </button>
         </div>
       </div>
+
 
       <div className="admin-nav-right">
         {admin && (

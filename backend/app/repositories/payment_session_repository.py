@@ -60,6 +60,40 @@ class PaymentSessionRepository:
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_by_reference_ids_bulk(
+        self, session: AsyncSession, reference_ids: Sequence[str]
+    ) -> dict[str, tuple[PaymentSession, Optional[PaymentSubmission]]]:
+        """Fetch dictionary mapping reference_id -> (PaymentSession, active PaymentSubmission) for bulk reconciliation."""
+        if not reference_ids:
+            return {}
+
+        from app.models.payment_submission import PaymentSubmission
+
+        clean_ids = list({r.strip() for r in reference_ids if r and r.strip()})
+        if not clean_ids:
+            return {}
+
+        result_map: dict[str, tuple[PaymentSession, Optional[PaymentSubmission]]] = {}
+        chunk_size = 500
+
+        for i in range(0, len(clean_ids), chunk_size):
+            chunk = clean_ids[i : i + chunk_size]
+            stmt = (
+                select(PaymentSession, PaymentSubmission)
+                .outerjoin(
+                    PaymentSubmission,
+                    (PaymentSubmission.payment_session_id == PaymentSession.id)
+                    & (PaymentSubmission.is_current.is_(True)),
+                )
+                .where(PaymentSession.reference_id.in_(chunk))
+            )
+            res = await session.execute(stmt)
+            for ps, submission in res.all():
+                result_map[ps.reference_id] = (ps, submission)
+
+        return result_map
+
+
     async def list_all(
         self,
         session: AsyncSession,

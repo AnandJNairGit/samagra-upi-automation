@@ -92,8 +92,16 @@ async def test_preview_xlsx_multi_sheet_endpoint(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_confirm_import_csv_workflow(db_session: AsyncSession):
     """Test two-step preview -> confirm workflow for CSV file."""
+    from sqlalchemy import delete
+    from app.models.bank_transaction import BankTransaction
+    from app.models.statement_import import StatementImport
+    await db_session.execute(delete(BankTransaction))
+    await db_session.execute(delete(StatementImport))
+    await db_session.flush()
+
     admin, token = await get_test_admin_and_token(db_session)
     transport = ASGITransport(app=app)
+
 
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         with open(CSV_PATH, "rb") as f:

@@ -10,6 +10,8 @@ import { AdminSubmittedPaymentsPage } from '../pages/AdminSubmittedPaymentsPage'
 import { AdminPaymentDetailPage } from '../pages/AdminPaymentDetailPage';
 import { AdminStatementImportsPage } from '../pages/AdminStatementImportsPage';
 import { AdminStatementImportDetailPage } from '../pages/AdminStatementImportDetailPage';
+import { AdminReconciliationPage } from '../pages/AdminReconciliationPage';
+import { AdminReconciliationRunDetailPage } from '../pages/AdminReconciliationRunDetailPage';
 import { PublicRegistrationPage } from '../pages/PublicRegistrationPage';
 import { PublicPaymentPage } from '../pages/PublicPaymentPage';
 import { HealthStatus } from '../components/HealthStatus';
@@ -107,10 +109,31 @@ const AppContent: React.FC = () => {
   if (isPath('/upi/admin/statement-imports') || isPath('/admin/statement-imports')) {
     return (
       <ProtectedRoute onNavigate={navigate}>
-        <AdminStatementImportsPage />
+        <AdminStatementImportsPage onNavigate={navigate} />
       </ProtectedRoute>
     );
   }
+
+  // 3.6 Admin Protected Reconciliation Run Detail Route (/upi/admin/reconciliation/runs/:runPublicId)
+  const reconciliationRunDetailMatch = currentPath.match(/^(?:\/upi)?\/admin\/reconciliation\/runs\/([a-fA-F0-9-]{36})\/?$/);
+  if (reconciliationRunDetailMatch) {
+    const runPublicId = reconciliationRunDetailMatch[1];
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminReconciliationRunDetailPage runPublicId={runPublicId} onNavigate={navigate} />
+      </ProtectedRoute>
+    );
+  }
+
+  // 3.7 Admin Protected Reconciliation Route (/upi/admin/reconciliation)
+  if (isPath('/upi/admin/reconciliation') || isPath('/admin/reconciliation')) {
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminReconciliationPage onNavigate={navigate} />
+      </ProtectedRoute>
+    );
+  }
+
 
   // 4. Admin Protected Dashboard Root (/upi/admin or /admin)
   if (isPath('/upi/admin') || isPath('/admin')) {
