@@ -1,0 +1,10 @@
+Transaction Date,Transaction Type,Transaction Remarks,Credit Amount,UTR Number,Payer Name,Description
+18/08/2026 01:22:00,CREDIT,BOUND_02A147F3,2500,8888adc95f13,Boundary Participant,Exact Reference and Amount Match (UTR Verified)
+18/08/2026 01:22:10,CREDIT,BOUND_D1B5A917,2500,999999999999,Boundary Participant,UTR Mismatch (Bank UTR differs from Submitted UTR)
+18/08/2026 01:21:00,CREDIT,BOUND_E2FF7390,2000,888850e748d5,Boundary Participant,Amount Mismatch (Bank Credit INR 2000 vs Expected INR 2500)
+18/08/2026 01:20:00,CREDIT,BOUND_1BB3C62A,2500,8888aafe8406,Boundary Participant,Duplicate Bank Transaction Copy 1
+18/08/2026 01:20:05,CREDIT,BOUND_1BB3C62A,2500,8888aafe8406,Boundary Participant,Duplicate Bank Transaction Copy 2
+18/08/2026 01:25:00,CREDIT,REF-DSAI-2002,25000,998877665544,Vikram Singh,Pending Session Match (No UTR Submitted Yet)
+18/08/2026 01:30:00,CREDIT,REF_UNKNOWN_999,5000,123456789012,Random Stranger,Unknown Reference Code Not In System
+18/08/2026 01:31:00,CREDIT,,1000,987654321098,Anonymous,Missing Reference Code
+18/08/2026 01:32:00,DEBIT,BANK_MAINT_FEE,50,000000000000,HDFC Bank,Debit Fee Adjustment (Non-Credit)
