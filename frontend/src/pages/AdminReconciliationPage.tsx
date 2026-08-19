@@ -37,10 +37,7 @@ export const AdminReconciliationPage: React.FC<AdminReconciliationPageProps> = (
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Run execution loading state for individual import ID
-  const [runningImportId, setRunningImportId] = useState<string | null>(null);
-
-  // Pagination for runs history
+  // Fetch data
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRunsCount, setTotalRunsCount] = useState(0);
@@ -54,7 +51,7 @@ export const AdminReconciliationPage: React.FC<AdminReconciliationPageProps> = (
       setStatementImports(importsRes.items);
 
       // Fetch runs history
-      const runsRes = await reconciliationApi.getReconciliationRuns(undefined, page, 20);
+      const runsRes = await reconciliationApi.getReconciliationRuns(undefined, undefined, page, 20);
       setRuns(runsRes.items);
       setTotalRunsCount(runsRes.total);
       setTotalPages(runsRes.total_pages);
@@ -69,16 +66,9 @@ export const AdminReconciliationPage: React.FC<AdminReconciliationPageProps> = (
     fetchData();
   }, [page]);
 
-  const handleStartReconciliation = async (importPublicId: string) => {
-    setRunningImportId(importPublicId);
-    setError(null);
-    try {
-      const runRes = await reconciliationApi.startReconciliationRun(importPublicId);
-      navigateTo(`/upi/admin/reconciliation/runs/${runRes.public_id}`);
-    } catch (err: any) {
-      setError(err.message || 'Failed to execute payment reconciliation run.');
-      setRunningImportId(null);
-    }
+  const handleStartReconciliation = () => {
+    // New batch-scoped reconciliation workflow: navigate user to Batches Workspace
+    navigateTo('/upi/admin/batches');
   };
 
   return (
@@ -171,22 +161,12 @@ export const AdminReconciliationPage: React.FC<AdminReconciliationPageProps> = (
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <button
-                        disabled={runningImportId === imp.public_id}
-                        onClick={() => handleStartReconciliation(imp.public_id)}
+                        onClick={handleStartReconciliation}
                         className="btn btn-primary btn-sm"
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' }}
                       >
-                        {runningImportId === imp.public_id ? (
-                          <>
-                            <Loader2 size={14} className="spinner" />
-                            <span>Reconciling...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Play size={14} />
-                            <span>Run Reconciliation</span>
-                          </>
-                        )}
+                        <Play size={14} />
+                        <span>Reconcile in Workspace</span>
                       </button>
                     </td>
                   </tr>

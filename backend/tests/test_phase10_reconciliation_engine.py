@@ -154,7 +154,7 @@ async def test_credit_reference_amount_match(db_session: AsyncSession):
     )
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     assert run_res.status == "COMPLETED"
     assert run_res.total_transactions == 1
@@ -189,7 +189,7 @@ async def test_pending_payment_session_can_be_reconciled(db_session: AsyncSessio
     )
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     assert run_res.matched_count == 1
 
@@ -223,7 +223,7 @@ async def test_reference_amount_match_without_payment_submission(db_session: Asy
     )
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     assert run_res.matched_count == 1
     results_res = await service.list_results_for_run_paginated(db_session, run_res.public_id)
@@ -250,7 +250,7 @@ async def test_reference_match_utr_mismatch(db_session: AsyncSession):
     )
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     assert run_res.utr_mismatch_count == 1
     assert run_res.matched_count == 0
@@ -281,7 +281,7 @@ async def test_amount_mismatch(db_session: AsyncSession):
     )
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     assert run_res.amount_mismatch_count == 1
     assert run_res.matched_count == 0
@@ -298,6 +298,7 @@ async def test_amount_mismatch(db_session: AsyncSession):
 async def test_unknown_reference(db_session: AsyncSession):
     """Test statement transaction with nonexistent reference code yields UNKNOWN_REFERENCE."""
     admin = await create_test_admin(db_session)
+    course, batch = await create_test_course_and_batch(db_session)
     unknown_ref = f"NONEXISTENT_REF_{uuid.uuid4().hex[:4].upper()}"
 
     si, txs = await create_test_statement_import(
@@ -307,7 +308,7 @@ async def test_unknown_reference(db_session: AsyncSession):
     )
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     assert run_res.unknown_reference_count == 1
 
@@ -323,6 +324,7 @@ async def test_unknown_reference(db_session: AsyncSession):
 async def test_missing_reference(db_session: AsyncSession):
     """Test statement transaction with blank reference code yields NO_REFERENCE."""
     admin = await create_test_admin(db_session)
+    course, batch = await create_test_course_and_batch(db_session)
 
     si, txs = await create_test_statement_import(
         db_session,
@@ -331,7 +333,7 @@ async def test_missing_reference(db_session: AsyncSession):
     )
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     assert run_res.no_reference_count == 1
 
@@ -346,6 +348,7 @@ async def test_missing_reference(db_session: AsyncSession):
 async def test_non_credit_transaction(db_session: AsyncSession):
     """Test DEBIT statement transaction yields UNMATCHED."""
     admin = await create_test_admin(db_session)
+    course, batch = await create_test_course_and_batch(db_session)
 
     si, txs = await create_test_statement_import(
         db_session,
@@ -354,7 +357,7 @@ async def test_non_credit_transaction(db_session: AsyncSession):
     )
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     assert run_res.unmatched_count == 1
     assert run_res.debit_transactions == 1
@@ -385,7 +388,7 @@ async def test_duplicate_reference_transaction(db_session: AsyncSession):
     )
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     assert run_res.duplicate_transaction_count == 2
     assert run_res.matched_count == 0
@@ -416,7 +419,7 @@ async def test_phase_boundary_payment_status_unmutated(db_session: AsyncSession)
     assert sub.status == "SUBMITTED"
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     assert run_res.matched_count == 1
 
@@ -449,11 +452,11 @@ async def test_rerun_determinism(db_session: AsyncSession):
     service = ReconciliationService()
 
     # Run 1
-    run1 = await service.run_reconciliation(db_session, si.public_id, admin)
+    run1 = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
     res1 = await service.list_results_for_run_paginated(db_session, run1.public_id)
 
     # Run 2
-    run2 = await service.run_reconciliation(db_session, si.public_id, admin)
+    run2 = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
     res2 = await service.list_results_for_run_paginated(db_session, run2.public_id)
 
     assert run1.public_id != run2.public_id
@@ -487,7 +490,7 @@ async def test_summary_metrics_consistency(db_session: AsyncSession):
     )
 
     service = ReconciliationService()
-    run_res = await service.run_reconciliation(db_session, si.public_id, admin)
+    run_res = await service.run_reconciliation(db_session, batch.public_id, si.public_id, admin)
 
     sum_counts = (
         run_res.matched_count

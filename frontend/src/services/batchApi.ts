@@ -1,5 +1,5 @@
 import { apiFetch } from './apiClient';
-import { Batch, BatchCreateInput, BatchUpdateInput } from '../types/batch';
+import { Batch, BatchCreateInput, BatchSummary, BatchUpdateInput } from '../types/batch';
 
 export async function getBatches(coursePublicId?: string, status?: string): Promise<Batch[]> {
   const params = new URLSearchParams();
@@ -25,6 +25,15 @@ export async function getBatch(publicId: string): Promise<Batch> {
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.detail || 'Failed to fetch batch details.');
+  }
+  return response.json();
+}
+
+export async function getBatchSummary(publicId: string): Promise<BatchSummary> {
+  const response = await apiFetch(`/v1/admin/batches/${publicId}/summary`, { method: 'GET' });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch batch summary metrics.');
   }
   return response.json();
 }

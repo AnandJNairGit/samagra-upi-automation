@@ -44,6 +44,7 @@ class ReconciliationRepository:
         self,
         session: AsyncSession,
         statement_import_id: Optional[int] = None,
+        batch_id: Optional[int] = None,
         page: int = 1,
         page_size: int = 20,
     ) -> Tuple[List[tuple[ReconciliationRun, StatementImport]], int]:
@@ -54,6 +55,9 @@ class ReconciliationRepository:
 
         if statement_import_id is not None:
             base_stmt = base_stmt.where(ReconciliationRun.statement_import_id == statement_import_id)
+
+        if batch_id is not None:
+            base_stmt = base_stmt.where(ReconciliationRun.batch_id == batch_id)
 
         subq = base_stmt.subquery()
         count_stmt = select(func.count()).select_from(subq)
@@ -150,3 +154,21 @@ class ReconciliationRepository:
         )
         result = await session.execute(stmt)
         return result.first()
+
+    async def delete_runs_by_statement_import_id(self, session: AsyncSession, statement_import_id: int) -> int:
+        """Delete all reconciliation runs (and cascaded results) associated with a statement import."""
+        from sqlalchemy import delete
+        stmt = delete(ReconciliationRun).where(ReconciliationRun.statement_import_id == statement_import_id)
+        result = await session.execute(stmt)
+        await session.flush()
+        return result.rowcount
+
+    async def delete_runs_by_batch_id(self, session: AsyncSession, batch_id: int) -> int:
+        """Delete all reconciliation runs (and cascaded results) associated with a batch."""
+        from sqlalchemy import delete
+        stmt = delete(ReconciliationRun).where(ReconciliationRun.batch_id == batch_id)
+        result = await session.execute(stmt)
+        await session.flush()
+        return result.rowcount
+
+

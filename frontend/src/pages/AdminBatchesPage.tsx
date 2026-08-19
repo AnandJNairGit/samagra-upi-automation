@@ -20,6 +20,7 @@ import {
   Calendar,
   Copy,
   Check,
+  FolderOpen,
 } from 'lucide-react';
 
 interface AdminBatchesPageProps {
@@ -425,6 +426,20 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                     <td>{getStatusBadge(batch.status)}</td>
                     <td>
                       <div className="table-actions">
+                        <button
+                          onClick={() => onNavigate(`/upi/admin/batches/${batch.public_id}`)}
+                          className="btn-action"
+                          title="Open Central Cohort Workspace"
+                          style={{
+                            background: 'rgba(99, 102, 241, 0.15)',
+                            color: '#818cf8',
+                            borderColor: 'rgba(99, 102, 241, 0.3)',
+                          }}
+                        >
+                          <FolderOpen size={14} color="#818cf8" />
+                          <span style={{ fontWeight: 600 }}>Workspace</span>
+                        </button>
+
                         {!isArchived ? (
                           <>
                             <button

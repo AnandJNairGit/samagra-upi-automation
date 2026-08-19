@@ -9,11 +9,14 @@ export type ReconciliationStatus =
   | 'UNMATCHED';
 
 export interface ReconciliationRunCreateRequest {
+  batch_public_id: string;
   statement_import_public_id: string;
 }
 
 export interface ReconciliationRunResponse {
   public_id: string;
+  batch_public_id?: string | null;
+  batch_name?: string | null;
   statement_import_public_id: string;
   filename: string;
   status: string;

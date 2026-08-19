@@ -8,12 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.admin_user import AdminUser
 from app.models.bank_transaction import BankTransaction
+from app.models.batch import Batch
 from app.models.payment_session import PaymentSession
 from app.models.payment_submission import PaymentSubmission
 from app.models.reconciliation_result import ReconciliationResult
 from app.models.reconciliation_run import ReconciliationRun
 from app.models.statement_import import StatementImport
 from app.repositories.bank_transaction_repository import BankTransactionRepository
+from app.repositories.batch_repository import BatchRepository
 from app.repositories.payment_session_repository import PaymentSessionRepository
 from app.repositories.reconciliation_repository import ReconciliationRepository
 from app.repositories.statement_import_repository import StatementImportRepository
@@ -25,6 +27,7 @@ from app.schemas.reconciliation import (
     ReconciliationRunResponse,
 )
 from app.services.exceptions import (
+    DomainError,
     ReconciliationResultNotFoundError,
     ReconciliationRunNotFoundError,
     StatementImportNotReadyError,
@@ -40,20 +43,31 @@ class ReconciliationService:
         statement_import_repo: Optional[StatementImportRepository] = None,
         bank_tx_repo: Optional[BankTransactionRepository] = None,
         payment_session_repo: Optional[PaymentSessionRepository] = None,
+        batch_repo: Optional[BatchRepository] = None,
     ):
         self.reconciliation_repo = reconciliation_repo or ReconciliationRepository()
         self.statement_import_repo = statement_import_repo or StatementImportRepository()
         self.bank_tx_repo = bank_tx_repo or BankTransactionRepository()
         self.payment_session_repo = payment_session_repo or PaymentSessionRepository()
+        self.batch_repo = batch_repo or BatchRepository()
 
     async def run_reconciliation(
         self,
         db: AsyncSession,
+        batch_public_id: uuid.UUID,
         statement_import_public_id: uuid.UUID,
         admin_user: AdminUser,
     ) -> ReconciliationRunResponse:
-        """Execute deterministic payment reconciliation against an imported bank statement file."""
-        # 1. Fetch statement import and verify readiness
+        """Execute deterministic payment reconciliation against an imported bank statement file for a specific batch."""
+        if not batch_public_id:
+            raise DomainError("A batch_public_id is required to initiate a reconciliation run.")
+
+        # 1. Fetch batch and verify existence
+        batch = await self.batch_repo.get_by_public_id_with_course(db, batch_public_id)
+        if not batch:
+            raise DomainError(f"Batch '{batch_public_id}' was not found.")
+
+        # 2. Fetch statement import and verify readiness
         import_res = await self.statement_import_repo.get_by_public_id(db, statement_import_public_id)
         if not import_res:
             raise StatementImportNotReadyError(
@@ -65,12 +79,15 @@ class ReconciliationService:
                 f"Statement import '{statement_import_public_id}' is not ready for reconciliation."
             )
 
-
         now_utc = datetime.now(timezone.utc)
 
-        # 2. Create initial ReconciliationRun entity in RUNNING state
+        # 3. Clean up previous reconciliation runs for this batch (no history retention)
+        await self.reconciliation_repo.delete_runs_by_batch_id(db, batch.id)
+
+        # 4. Create new ReconciliationRun entity in RUNNING state with batch_id
         run = ReconciliationRun(
             statement_import_id=statement_import.id,
+            batch_id=batch.id,
             initiated_by=admin_user.id,
             status="RUNNING",
             started_at=now_utc,
@@ -78,26 +95,27 @@ class ReconciliationService:
         await self.reconciliation_repo.create_run(db, run)
 
         try:
-            # 3. Fetch all bank transactions for statement import
-            # We fetch all transactions for this import
+            # 4. Fetch all bank transactions for statement import
             from sqlalchemy import select
             stmt = select(BankTransaction).where(BankTransaction.statement_import_id == statement_import.id).order_by(BankTransaction.id.asc())
             res = await db.execute(stmt)
             all_txs = list(res.scalars().all())
 
-            # 4. Extract CREDIT transactions and reference IDs
+            # 5. Extract CREDIT transactions and reference IDs
             credit_txs = [tx for tx in all_txs if (tx.direction or "").upper() == "CREDIT"]
             debit_txs = [tx for tx in all_txs if (tx.direction or "").upper() != "CREDIT"]
 
             ref_ids = [tx.reference_id.strip() for tx in credit_txs if tx.reference_id and tx.reference_id.strip()]
 
-            # Count reference occurrences among CREDIT transactions in this run (to detect duplicate reference submissions)
+            # Count reference occurrences among CREDIT transactions in this run
             ref_counts = Counter(ref_ids)
 
-            # 5. Bulk lookup PaymentSessions (and active PaymentSubmissions) in O(N)
-            payment_map = await self.payment_session_repo.get_by_reference_ids_bulk(db, ref_ids)
+            # 6. Bulk lookup PaymentSessions restricted directly at SQL-level to selected batch_id
+            payment_map = await self.payment_session_repo.get_by_reference_ids_bulk(
+                db, ref_ids, batch_id=batch.id
+            )
 
-            # 6. Execute deterministic classification for each BankTransaction
+            # 7. Execute deterministic classification for each BankTransaction
             results_to_create: List[ReconciliationResult] = []
 
             matched_count = 0
@@ -142,6 +160,12 @@ class ReconciliationService:
                     payment_tuple = payment_map.get(raw_ref)
                     ps = payment_tuple[0] if payment_tuple else None
                     sub = payment_tuple[1] if payment_tuple else None
+
+                    # Invariant Check: Ensure matched session belongs to run.batch_id
+                    if ps and ps.batch_id != batch.id:
+                        ps = None
+                        sub = None
+
                     ps_id = ps.id if ps else None
                     sub_id = sub.id if sub else None
 
@@ -158,10 +182,10 @@ class ReconciliationService:
                     payment_tuple = payment_map.get(raw_ref)
 
                     if not payment_tuple:
-                        # Reference code unknown in DB
+                        # Reference code unknown in DB for this batch
                         result_status = "UNKNOWN_REFERENCE"
                         reason_code = "UNKNOWN_REFERENCE"
-                        explanation = f"No PaymentSession exists with reference code '{raw_ref}'."
+                        explanation = f"No PaymentSession exists for batch '{batch.name}' with reference code '{raw_ref}'."
                         ref_match = False
                         amt_match = None
                         utr_match = None
@@ -170,6 +194,14 @@ class ReconciliationService:
                         unknown_reference_count += 1
                     else:
                         ps, sub = payment_tuple
+
+                        # Invariant Check: Ensure payment session belongs strictly to run.batch_id
+                        if ps.batch_id != batch.id:
+                            raise DomainError(
+                                f"Batch isolation violation: PaymentSession {ps.id} (batch {ps.batch_id}) "
+                                f"does not belong to run batch {batch.id}."
+                            )
+
                         ps_id = ps.id
                         sub_id = sub.id if sub else None
                         ref_match = True
@@ -218,6 +250,10 @@ class ReconciliationService:
                                 utr_info = " UTR verified." if utr_match is True else " (UTR not provided or missing)."
                                 explanation = f"Reference code and amount matched successfully.{utr_info}"
                                 matched_count += 1
+                                if ps:
+                                    ps.status = "APPROVED"
+                                if sub:
+                                    sub.status = "APPROVED"
 
                 res_obj = ReconciliationResult(
                     reconciliation_run_id=run.id,
@@ -234,7 +270,7 @@ class ReconciliationService:
                 )
                 results_to_create.append(res_obj)
 
-            # 7. Update run metrics and set COMPLETED
+            # 8. Update run metrics and set COMPLETED
             run.total_transactions = len(all_txs)
             run.credit_transactions = len(credit_txs)
             run.debit_transactions = len(debit_txs)
@@ -256,7 +292,9 @@ class ReconciliationService:
             return ReconciliationRunResponse(
                 public_id=run.public_id,
                 statement_import_public_id=statement_import.public_id,
+                batch_public_id=batch.public_id,
                 filename=statement_import.filename,
+                batch_name=batch.name,
                 status=run.status,
                 total_transactions=run.total_transactions,
                 credit_transactions=run.credit_transactions,
@@ -288,10 +326,21 @@ class ReconciliationService:
         if not item:
             raise ReconciliationRunNotFoundError(str(public_id))
         run, statement_import = item
+
+        batch_pub_id = None
+        batch_title = None
+        if run.batch_id:
+            b_obj = await self.batch_repo.get_by_id(db, run.batch_id)
+            if b_obj:
+                batch_pub_id = b_obj.public_id
+                batch_title = b_obj.name
+
         return ReconciliationRunResponse(
             public_id=run.public_id,
             statement_import_public_id=statement_import.public_id,
+            batch_public_id=batch_pub_id,
             filename=statement_import.filename,
+            batch_name=batch_title,
             status=run.status,
             total_transactions=run.total_transactions,
             credit_transactions=run.credit_transactions,
@@ -313,6 +362,7 @@ class ReconciliationService:
         self,
         db: AsyncSession,
         statement_import_public_id: Optional[uuid.UUID] = None,
+        batch_public_id: Optional[uuid.UUID] = None,
         page: int = 1,
         page_size: int = 20,
     ) -> ReconciliationRunListResponse:
@@ -323,34 +373,50 @@ class ReconciliationService:
             if imp_res:
                 statement_import_id = imp_res[0].id
 
+        batch_id = None
+        if batch_public_id:
+            b_res = await self.batch_repo.get_by_public_id(db, batch_public_id)
+            if b_res:
+                batch_id = b_res.id
 
         items, total = await self.reconciliation_repo.list_runs_paginated(
-            db, statement_import_id=statement_import_id, page=page, page_size=page_size
+            db, statement_import_id=statement_import_id, batch_id=batch_id, page=page, page_size=page_size
         )
 
-        response_items = [
-            ReconciliationRunResponse(
-                public_id=run.public_id,
-                statement_import_public_id=si.public_id,
-                filename=si.filename,
-                status=run.status,
-                total_transactions=run.total_transactions,
-                credit_transactions=run.credit_transactions,
-                debit_transactions=run.debit_transactions,
-                matched_count=run.matched_count,
-                amount_mismatch_count=run.amount_mismatch_count,
-                unknown_reference_count=run.unknown_reference_count,
-                no_reference_count=run.no_reference_count,
-                utr_mismatch_count=run.utr_mismatch_count,
-                duplicate_transaction_count=run.duplicate_transaction_count,
-                needs_review_count=run.needs_review_count,
-                unmatched_count=run.unmatched_count,
-                started_at=run.started_at,
-                completed_at=run.completed_at,
-                created_at=run.created_at,
+        response_items = []
+        for run, si in items:
+            b_pub_id = None
+            b_title = None
+            if run.batch_id:
+                b_obj = await self.batch_repo.get_by_id(db, run.batch_id)
+                if b_obj:
+                    b_pub_id = b_obj.public_id
+                    b_title = b_obj.name
+
+            response_items.append(
+                ReconciliationRunResponse(
+                    public_id=run.public_id,
+                    statement_import_public_id=si.public_id,
+                    batch_public_id=b_pub_id,
+                    filename=si.filename,
+                    batch_name=b_title,
+                    status=run.status,
+                    total_transactions=run.total_transactions,
+                    credit_transactions=run.credit_transactions,
+                    debit_transactions=run.debit_transactions,
+                    matched_count=run.matched_count,
+                    amount_mismatch_count=run.amount_mismatch_count,
+                    unknown_reference_count=run.unknown_reference_count,
+                    no_reference_count=run.no_reference_count,
+                    utr_mismatch_count=run.utr_mismatch_count,
+                    duplicate_transaction_count=run.duplicate_transaction_count,
+                    needs_review_count=run.needs_review_count,
+                    unmatched_count=run.unmatched_count,
+                    started_at=run.started_at,
+                    completed_at=run.completed_at,
+                    created_at=run.created_at,
+                )
             )
-            for run, si in items
-        ]
 
         total_pages = (total + page_size - 1) // page_size if total > 0 else 0
 

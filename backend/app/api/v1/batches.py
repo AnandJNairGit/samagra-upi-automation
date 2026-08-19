@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.dependencies import require_admin
 from app.core.database import get_db
 from app.models.admin_user import AdminUser
-from app.schemas.batch import BatchCreate, BatchResponse, BatchUpdate
+from app.schemas.batch import BatchCreate, BatchResponse, BatchSummaryResponse, BatchUpdate
 from app.services.batch_service import BatchService
 from app.services.exceptions import (
     BatchArchivedError,
@@ -95,6 +95,28 @@ async def create_batch(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=msg,
+        ) from exc
+
+
+@router.get(
+    "/{batch_public_id}/summary",
+    response_model=BatchSummaryResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Batch Workspace Summary Metrics",
+)
+async def get_batch_summary(
+    batch_public_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_admin: AdminUser = require_admin,
+    service: BatchService = Depends(get_batch_service),
+):
+    """Retrieve aggregated summary metrics for a batch workspace."""
+    try:
+        return await service.get_batch_summary(db, batch_public_id)
+    except BatchNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=exc.message,
         ) from exc
 
 

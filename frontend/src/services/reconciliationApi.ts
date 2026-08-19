@@ -8,11 +8,15 @@ import {
 
 export const reconciliationApi = {
   startReconciliationRun: async (
+    batchPublicId: string,
     statementImportPublicId: string
   ): Promise<ReconciliationRunResponse> => {
     const response = await apiFetch('/v1/admin/reconciliation/runs', {
       method: 'POST',
-      body: JSON.stringify({ statement_import_public_id: statementImportPublicId }),
+      body: JSON.stringify({
+        batch_public_id: batchPublicId,
+        statement_import_public_id: statementImportPublicId,
+      }),
     });
 
     if (!response.ok) {
@@ -25,12 +29,16 @@ export const reconciliationApi = {
 
   getReconciliationRuns: async (
     statementImportPublicId?: string,
+    batchPublicId?: string,
     page: number = 1,
     pageSize: number = 20
   ): Promise<ReconciliationRunListResponse> => {
     let url = `/v1/admin/reconciliation/runs?page=${page}&page_size=${pageSize}`;
     if (statementImportPublicId) {
       url += `&statement_import_public_id=${statementImportPublicId}`;
+    }
+    if (batchPublicId) {
+      url += `&batch_public_id=${batchPublicId}`;
     }
 
     const response = await apiFetch(url, { method: 'GET' });

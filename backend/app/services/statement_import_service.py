@@ -34,6 +34,9 @@ from app.schemas.statement_import import (
 _PREVIEW_SESSIONS: Dict[str, Dict[str, Any]] = {}
 
 
+from app.repositories.reconciliation_repository import ReconciliationRepository
+
+
 class StatementImportService:
     """Service orchestrating statement import previews, confirmations, deduplication, and persistence."""
 
@@ -42,10 +45,12 @@ class StatementImportService:
         parser_service: Optional[StatementParserService] = None,
         import_repo: Optional[StatementImportRepository] = None,
         txn_repo: Optional[BankTransactionRepository] = None,
+        recon_repo: Optional[ReconciliationRepository] = None,
     ):
         self.parser = parser_service or StatementParserService()
         self.import_repo = import_repo or StatementImportRepository()
         self.txn_repo = txn_repo or BankTransactionRepository()
+        self.recon_repo = recon_repo or ReconciliationRepository()
 
     def preview_import(
         self,
@@ -467,13 +472,21 @@ class StatementImportService:
         )
 
     async def delete_import(self, db: AsyncSession, import_public_id: uuid.UUID) -> bool:
-        """Delete a statement import and all associated bank transactions."""
+        """Delete a statement import and all associated bank transactions and reconciliation runs."""
         res = await self.import_repo.get_by_public_id(db, import_public_id)
         if not res:
             return False
 
         imp, _ = res
-        await self.txn_repo.delete_by_import_id(db, imp.id)
-        await self.import_repo.delete(db, imp)
-        await db.commit()
-        return True
+        try:
+            # 1. Delete associated reconciliation runs and their cascaded results
+            await self.recon_repo.delete_runs_by_statement_import_id(db, imp.id)
+            # 2. Delete bank transactions for this statement import
+            await self.txn_repo.delete_by_import_id(db, imp.id)
+            # 3. Delete statement import record
+            await self.import_repo.delete(db, imp)
+            await db.commit()
+            return True
+        except Exception as exc:
+            await db.rollback()
+            raise DomainError(f"Failed to delete statement import '{imp.filename}': {str(exc)}")

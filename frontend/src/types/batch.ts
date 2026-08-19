@@ -30,3 +30,19 @@ export interface BatchUpdateInput {
   starts_at?: string | null;
   ends_at?: string | null;
 }
+
+export interface BatchSummary {
+  batch_public_id: string;
+  batch_name: string;
+  course_name: string;
+  amount_inr: number;
+  status: BatchStatus;
+  payments_generated: number;
+  payments_submitted: number;
+  payments_approved: number;
+  expected_amount_inr: number;
+  approved_amount_inr: number;
+  statement_count: number;
+  latest_reconciliation_status: string | null;
+  latest_reconciliation_run_public_id: string | null;
+}

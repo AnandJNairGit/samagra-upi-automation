@@ -95,6 +95,11 @@ async def test_confirm_import_csv_workflow(db_session: AsyncSession):
     from sqlalchemy import delete
     from app.models.bank_transaction import BankTransaction
     from app.models.statement_import import StatementImport
+    from app.models.reconciliation_result import ReconciliationResult
+    from app.models.reconciliation_run import ReconciliationRun
+
+    await db_session.execute(delete(ReconciliationResult))
+    await db_session.execute(delete(ReconciliationRun))
     await db_session.execute(delete(BankTransaction))
     await db_session.execute(delete(StatementImport))
     await db_session.flush()

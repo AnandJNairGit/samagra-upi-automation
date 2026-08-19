@@ -61,7 +61,10 @@ class PaymentSessionRepository:
         return result.scalar_one_or_none()
 
     async def get_by_reference_ids_bulk(
-        self, session: AsyncSession, reference_ids: Sequence[str]
+        self,
+        session: AsyncSession,
+        reference_ids: Sequence[str],
+        batch_id: Optional[int] = None,
     ) -> dict[str, tuple[PaymentSession, Optional[PaymentSubmission]]]:
         """Fetch dictionary mapping reference_id -> (PaymentSession, active PaymentSubmission) for bulk reconciliation."""
         if not reference_ids:
@@ -87,6 +90,9 @@ class PaymentSessionRepository:
                 )
                 .where(PaymentSession.reference_id.in_(chunk))
             )
+            if batch_id is not None:
+                stmt = stmt.where(PaymentSession.batch_id == batch_id)
+
             res = await session.execute(stmt)
             for ps, submission in res.all():
                 result_map[ps.reference_id] = (ps, submission)

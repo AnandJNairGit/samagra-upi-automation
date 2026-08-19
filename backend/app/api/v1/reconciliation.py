@@ -31,7 +31,7 @@ router = APIRouter()
     response_model=ReconciliationRunResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Start payment reconciliation run",
-    description="Initiates an administrative payment reconciliation run against an imported bank statement file.",
+    description="Initiates an administrative payment reconciliation run for a specific batch against an imported bank statement file.",
 )
 async def start_reconciliation_run(
     payload: ReconciliationRunCreateRequest,
@@ -43,6 +43,7 @@ async def start_reconciliation_run(
     try:
         return await service.run_reconciliation(
             db=db,
+            batch_public_id=payload.batch_public_id,
             statement_import_public_id=payload.statement_import_public_id,
             admin_user=current_admin,
         )
@@ -60,6 +61,7 @@ async def start_reconciliation_run(
 )
 async def list_reconciliation_runs(
     statement_import_public_id: Optional[uuid.UUID] = Query(None, description="Filter runs by statement import UUID"),
+    batch_public_id: Optional[uuid.UUID] = Query(None, description="Filter runs by batch UUID"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     current_admin: AdminUser = require_admin,
@@ -70,6 +72,7 @@ async def list_reconciliation_runs(
     return await service.list_runs_paginated(
         db=db,
         statement_import_public_id=statement_import_public_id,
+        batch_public_id=batch_public_id,
         page=page,
         page_size=page_size,
     )

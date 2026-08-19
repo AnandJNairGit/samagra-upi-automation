@@ -16,6 +16,7 @@ from app.schemas.statement_import import (
     StatementImportDetailResponse,
     StatementImportListResponse,
 )
+from app.services.exceptions import DomainError, StatementImportInUseError, StatementImportNotReadyError
 from app.services.statement_import_service import StatementImportService
 
 from app.core.logging import logger
@@ -188,6 +189,8 @@ async def delete_statement_import(
     service: StatementImportService = Depends(get_statement_import_service),
 ):
     """Delete an imported statement record and all bank transactions associated with it."""
+    from app.services.exceptions import StatementImportInUseError
+
     try:
         success = await service.delete_import(db, import_public_id)
         if not success:
@@ -199,9 +202,15 @@ async def delete_statement_import(
             "message": "Statement import and associated bank transactions deleted successfully.",
             "deleted_public_id": str(import_public_id),
         }
+    except (StatementImportInUseError, DomainError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=getattr(exc, "message", str(exc)),
+        ) from exc
     except HTTPException:
         raise
     except Exception as exc:
+        logger.exception("Unable to delete statement import", exc_info=exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to delete statement import.",

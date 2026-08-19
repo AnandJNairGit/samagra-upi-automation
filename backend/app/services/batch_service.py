@@ -238,3 +238,62 @@ class BatchService:
             created_at=batch.created_at,
             updated_at=batch.updated_at,
         )
+
+    async def get_batch_summary(
+        self, db: AsyncSession, public_id: uuid.UUID
+    ) -> "BatchSummaryResponse":
+        """Compute aggregate summary metrics for a batch workspace via single-query database aggregations."""
+        from sqlalchemy import case, func, select
+        from app.models.payment_session import PaymentSession
+        from app.models.reconciliation_run import ReconciliationRun
+        from app.models.statement_import import StatementImport
+        from app.schemas.batch import BatchSummaryResponse
+
+        batch = await self.batch_repo.get_by_public_id_with_course(db, public_id)
+        if not batch:
+            raise BatchNotFoundError(str(public_id))
+
+        # 1. Single aggregate query over PaymentSessions for this batch
+        stmt = select(
+            func.count(PaymentSession.id).label("payments_generated"),
+            func.count(PaymentSession.id).filter(PaymentSession.status == "SUBMITTED").label("payments_submitted"),
+            func.count(PaymentSession.id).filter(PaymentSession.status == "APPROVED").label("payments_approved"),
+            func.coalesce(func.sum(PaymentSession.amount_inr), 0).label("expected_amount_inr"),
+            func.coalesce(
+                func.sum(case((PaymentSession.status == "APPROVED", PaymentSession.amount_inr), else_=0)),
+                0,
+            ).label("approved_amount_inr"),
+        ).where(PaymentSession.batch_id == batch.id)
+
+        res = await db.execute(stmt)
+        row = res.one()
+
+        # 2. Total statement import count
+        stmt_count_res = await db.execute(select(func.count(StatementImport.id)))
+        statement_count = stmt_count_res.scalar_one() or 0
+
+        # 3. Latest reconciliation run for this batch
+        latest_run_stmt = (
+            select(ReconciliationRun)
+            .where(ReconciliationRun.batch_id == batch.id)
+            .order_by(ReconciliationRun.created_at.desc(), ReconciliationRun.id.desc())
+            .limit(1)
+        )
+        latest_run_res = await db.execute(latest_run_stmt)
+        latest_run = latest_run_res.scalar_one_or_none()
+
+        return BatchSummaryResponse(
+            batch_public_id=batch.public_id,
+            batch_name=batch.name,
+            course_name=batch.course.name if batch.course else "",
+            amount_inr=batch.amount_inr,
+            status=batch.status,
+            payments_generated=row.payments_generated,
+            payments_submitted=row.payments_submitted,
+            payments_approved=row.payments_approved,
+            expected_amount_inr=row.expected_amount_inr,
+            approved_amount_inr=row.approved_amount_inr,
+            statement_count=statement_count,
+            latest_reconciliation_status=latest_run.status if latest_run else None,
+            latest_reconciliation_run_public_id=latest_run.public_id if latest_run else None,
+        )

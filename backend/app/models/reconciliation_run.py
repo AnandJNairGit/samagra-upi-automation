@@ -8,6 +8,7 @@ from app.models.base import Base, IdentityIdMixin, PublicIdMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.admin_user import AdminUser
+    from app.models.batch import Batch
     from app.models.reconciliation_result import ReconciliationResult
     from app.models.statement_import import StatementImport
 
@@ -21,6 +22,11 @@ class ReconciliationRun(Base, IdentityIdMixin, PublicIdMixin, TimestampMixin):
         BigInteger,
         ForeignKey("statement_imports.id", ondelete="RESTRICT"),
         nullable=False,
+    )
+    batch_id: Mapped[Optional[int]] = mapped_column(
+        BigInteger,
+        ForeignKey("batches.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     initiated_by: Mapped[int] = mapped_column(
         BigInteger,
@@ -60,6 +66,9 @@ class ReconciliationRun(Base, IdentityIdMixin, PublicIdMixin, TimestampMixin):
     statement_import: Mapped["StatementImport"] = relationship(
         "StatementImport",
     )
+    batch: Mapped[Optional["Batch"]] = relationship(
+        "Batch",
+    )
     admin_user: Mapped["AdminUser"] = relationship(
         "AdminUser",
     )
@@ -75,7 +84,9 @@ class ReconciliationRun(Base, IdentityIdMixin, PublicIdMixin, TimestampMixin):
             name="ck_reconciliation_runs_status",
         ),
         Index("ix_reconciliation_runs_statement_import", "statement_import_id"),
+        Index("ix_reconciliation_runs_batch_id", "batch_id"),
         Index("ix_reconciliation_runs_initiated_by", "initiated_by"),
         Index("ix_reconciliation_runs_created_at", "created_at"),
         Index("ix_reconciliation_runs_status", "status"),
     )
+

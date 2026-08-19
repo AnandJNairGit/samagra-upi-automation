@@ -185,3 +185,10 @@ class StatementImportNotReadyError(DomainError):
         super().__init__(message)
 
 
+class StatementImportInUseError(DomainError):
+    """Raised when attempting to delete a statement import that has active reconciliation records."""
+
+    def __init__(self, message: str = "Cannot delete statement import that has active reconciliation records."):
+        super().__init__(message)
+
+

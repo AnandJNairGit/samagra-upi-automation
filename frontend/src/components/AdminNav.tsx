@@ -4,9 +4,6 @@ import {
   LayoutDashboard,
   BookOpen,
   Layers,
-  CreditCard,
-  CheckSquare,
-  FileSpreadsheet,
   GitCompare,
   LogOut,
   User,
@@ -79,32 +76,9 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
           </button>
 
           <button
-            className={`nav-tab ${activeTab === 'payments' ? 'active' : ''}`}
-            onClick={() => navigateTo('/upi/admin/payments')}
-          >
-            <CreditCard size={16} />
-            <span>Payments</span>
-          </button>
-
-          <button
-            className={`nav-tab ${activeTab === 'submitted' ? 'active' : ''}`}
-            onClick={() => navigateTo('/upi/admin/payments/submitted')}
-          >
-            <CheckSquare size={16} />
-            <span>Submitted</span>
-          </button>
-
-          <button
-            className={`nav-tab ${activeTab === 'statement-imports' ? 'active' : ''}`}
-            onClick={() => navigateTo('/upi/admin/statement-imports')}
-          >
-            <FileSpreadsheet size={16} />
-            <span>Statement Imports</span>
-          </button>
-
-          <button
             className={`nav-tab ${activeTab === 'reconciliation' ? 'active' : ''}`}
             onClick={() => navigateTo('/upi/admin/reconciliation')}
+            title="Global Reconciliation Run History"
           >
             <GitCompare size={16} />
             <span>Reconciliation</span>

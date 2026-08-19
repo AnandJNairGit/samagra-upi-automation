@@ -5,6 +5,7 @@ import { AdminLoginPage } from '../pages/AdminLoginPage';
 import { AdminDashboardPage } from '../pages/AdminDashboardPage';
 import { AdminCoursesPage } from '../pages/AdminCoursesPage';
 import { AdminBatchesPage } from '../pages/AdminBatchesPage';
+import { AdminBatchWorkspacePage } from '../pages/AdminBatchWorkspacePage';
 import { AdminPaymentsPage } from '../pages/AdminPaymentsPage';
 import { AdminSubmittedPaymentsPage } from '../pages/AdminSubmittedPaymentsPage';
 import { AdminPaymentDetailPage } from '../pages/AdminPaymentDetailPage';
@@ -51,6 +52,18 @@ const AppContent: React.FC = () => {
     return (
       <ProtectedRoute onNavigate={navigate}>
         <AdminCoursesPage onNavigate={navigate} />
+      </ProtectedRoute>
+    );
+  }
+
+  // 3.0 Admin Protected Batch Workspace Route (/upi/admin/batches/:batchPublicId/*)
+  const batchWorkspaceMatch = currentPath.match(/^(?:\/upi)?\/admin\/batches\/([a-fA-F0-9-]{36})(?:\/(overview|payments|bank-transactions|reconciliation))?\/?$/);
+  if (batchWorkspaceMatch) {
+    const batchPublicId = batchWorkspaceMatch[1];
+    const tabParam = (batchWorkspaceMatch[2] || 'payments') as 'overview' | 'payments' | 'bank-transactions' | 'reconciliation';
+    return (
+      <ProtectedRoute onNavigate={navigate}>
+        <AdminBatchWorkspacePage batchPublicId={batchPublicId} onNavigate={navigate} initialTab={tabParam} />
       </ProtectedRoute>
     );
   }

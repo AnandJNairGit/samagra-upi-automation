@@ -7,10 +7,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ReconciliationRunCreateRequest(BaseModel):
-    """Payload to initiate a reconciliation run against an imported statement."""
+    """Payload to initiate a batch-scoped reconciliation run against an imported statement."""
 
     model_config = ConfigDict(extra="forbid")
 
+    batch_public_id: uuid.UUID = Field(
+        ...,
+        description="Public UUID of the batch being reconciled.",
+    )
     statement_import_public_id: uuid.UUID = Field(
         ...,
         description="Public UUID of the completed statement import file.",
@@ -22,7 +26,9 @@ class ReconciliationRunResponse(BaseModel):
 
     public_id: uuid.UUID
     statement_import_public_id: uuid.UUID
+    batch_public_id: Optional[uuid.UUID] = None
     filename: str
+    batch_name: Optional[str] = None
     status: str
 
     total_transactions: int

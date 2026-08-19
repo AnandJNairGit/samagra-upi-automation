@@ -92,3 +92,25 @@ class BatchResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+class BatchSummaryResponse(BaseModel):
+    """Aggregated summary metrics for a specific batch."""
+
+    batch_public_id: uuid.UUID
+    batch_name: str
+    course_name: str
+    amount_inr: int
+    status: str
+
+    payments_generated: int
+    payments_submitted: int
+    payments_approved: int
+    expected_amount_inr: int
+    approved_amount_inr: int
+
+    statement_count: int
+    latest_reconciliation_status: Optional[str] = None
+    latest_reconciliation_run_public_id: Optional[uuid.UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
