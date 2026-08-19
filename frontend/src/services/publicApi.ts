@@ -124,11 +124,13 @@ export async function fetchPaymentSession(
 }
 
 /**
- * Submit UTR / transaction reference number for an active payment session (Phase 7).
+ * Submit payment confirmation for an active payment session (Phase 7).
+ * UTR is optional — if the user doesn't have it, their payment is still verified
+ * by matching the reference code + amount against the bank statement.
  */
 export async function submitPaymentSessionUTR(
   paymentSessionPublicId: string,
-  utr: string,
+  utr: string | null,
 ): Promise<UTRSubmissionResponse> {
   const url = `${config.apiBaseUrl}/v1/public/payment-sessions/${paymentSessionPublicId}/submissions`;
   const response = await fetch(url, {
@@ -138,7 +140,7 @@ export async function submitPaymentSessionUTR(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      utr: utr.trim(),
+      utr: utr && utr.trim() ? utr.trim() : null,
     }),
   });
 

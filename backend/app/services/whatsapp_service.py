@@ -2,6 +2,7 @@
 
 import re
 import urllib.parse
+from typing import Optional
 
 
 def format_whatsapp_admin_message(
@@ -12,7 +13,7 @@ def format_whatsapp_admin_message(
     batch_name: str,
     amount_inr: int,
     reference_id: str,
-    utr: str,
+    utr: Optional[str],
 ) -> str:
     """Format standard notification message for the administrator using immutable snapshot data."""
     return (
@@ -22,9 +23,9 @@ def format_whatsapp_admin_message(
         f"Email: {email}\n\n"
         f"Course: {course_name}\n"
         f"Batch: {batch_name}\n"
-        f"Amount: ₹{amount_inr:,}\n\n"
+        f"Amount: \u20b9{amount_inr:,}\n\n"
         f"Reference ID: {reference_id}\n"
-        f"UTR: {utr}\n\n"
+        f"UTR: {utr if utr else 'Not provided'}\n\n"
         f"Payment Status: SUBMITTED"
     )
 
@@ -38,7 +39,7 @@ def build_whatsapp_admin_url(
     batch_name: str,
     amount_inr: int,
     reference_id: str,
-    utr: str,
+    utr: Optional[str],
 ) -> str:
     """Construct a URL-encoded WhatsApp deep link directed to the administrator."""
     clean_admin_phone = re.sub(r"\D", "", admin_phone.strip())
@@ -56,8 +57,10 @@ def build_whatsapp_admin_url(
     return f"https://wa.me/{clean_admin_phone}?text={encoded_message}"
 
 
-def mask_utr(utr: str) -> str:
-    """Mask UTR transaction reference for privacy (e.g., 1234••••9012)."""
+def mask_utr(utr: Optional[str]) -> Optional[str]:
+    """Mask UTR transaction reference for privacy. Returns None if UTR is absent."""
+    if not utr or not utr.strip():
+        return None
     clean = utr.strip()
     if len(clean) <= 4:
         return "••••"

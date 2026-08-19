@@ -9,11 +9,13 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class PaymentSubmissionCreate(BaseModel):
     """Schema for submitting a transaction UTR."""
 
-    utr: str = Field(..., min_length=1, max_length=100)
+    utr: Optional[str] = Field(None, min_length=1, max_length=100)
 
     @field_validator("utr")
     @classmethod
-    def validate_non_blank_utr(cls, v: str) -> str:
+    def validate_non_blank_utr(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
         clean = v.strip()
         if not clean:
             raise ValueError("utr cannot be empty or whitespace only")
@@ -24,7 +26,7 @@ class PaymentSubmissionResponse(BaseModel):
     """Internal/Admin representation of a payment submission."""
 
     public_id: uuid.UUID
-    utr: str
+    utr: Optional[str] = None
     status: str
     submitted_at: datetime
     reviewed_at: Optional[datetime] = None
@@ -47,19 +49,21 @@ class PublicUTRSubmitRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    utr: str = Field(
-        ...,
+    utr: Optional[str] = Field(
+        None,
         min_length=4,
         max_length=100,
-        description="Bank / UPI transaction reference (UTR) number",
+        description="Bank / UPI transaction reference (UTR) number — optional, submit if available",
     )
 
     @field_validator("utr")
     @classmethod
-    def validate_utr(cls, v: str) -> str:
+    def validate_utr(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
         clean = v.strip()
         if not clean:
-            raise ValueError("Transaction reference (UTR) cannot be empty or whitespace only.")
+            return None  # Treat empty string as absent
         if len(clean) < 4:
             raise ValueError("Transaction reference (UTR) must be at least 4 characters long.")
         if len(clean) > 100:
@@ -75,6 +79,6 @@ class PublicUTRSubmitResponse(BaseModel):
     payment_session_public_id: uuid.UUID
     submission_public_id: uuid.UUID
     status: str
-    utr_masked: str
+    utr_masked: Optional[str] = None
     submitted_at: datetime
     whatsapp_url: str

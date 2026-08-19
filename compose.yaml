@@ -49,6 +49,9 @@ services:
       - ./backend/alembic.ini:/app/alembic.ini:ro
       - ./backend/scripts:/app/scripts:ro
       - ./backend/pytest.ini:/app/pytest.ini:ro
+      - ./seed_manual_test_data.py:/app/seed_manual_test_data.py:ro
+      - ./clean_manual_test_data.py:/app/clean_manual_test_data.py:ro
+      - ./clear_db.py:/app/clear_db.py:ro
     depends_on:
       postgres:
         condition: service_healthy

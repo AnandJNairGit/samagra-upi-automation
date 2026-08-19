@@ -1,4 +1,4 @@
-# Database Architecture & Schema Specification (Phases 1 - 9)
+# Database Architecture & Schema Specification (Phases 1 – 10)
 
 Comprehensive technical documentation for the **Samagra UPI Automation** PostgreSQL 16 database foundation.
 
@@ -11,11 +11,17 @@ erDiagram
     ADMIN_USERS ||--o{ ADMIN_SESSIONS : "authenticates"
     ADMIN_USERS ||--o{ PAYMENT_SUBMISSIONS : "reviews"
     ADMIN_USERS ||--o{ STATEMENT_IMPORTS : "uploads"
+    ADMIN_USERS ||--o{ RECONCILIATION_RUNS : "initiates"
     COURSES ||--o{ BATCHES : "contains"
     COURSES ||--o{ PAYMENT_SESSIONS : "historical reference"
     BATCHES ||--o{ PAYMENT_SESSIONS : "generates"
+    BATCHES ||--o{ RECONCILIATION_RUNS : "reconciled against"
     PAYMENT_SESSIONS ||--o{ PAYMENT_SUBMISSIONS : "receives attempts"
+    PAYMENT_SESSIONS ||--o{ RECONCILIATION_RESULTS : "classified by"
     STATEMENT_IMPORTS ||--o{ BANK_TRANSACTIONS : "contains"
+    STATEMENT_IMPORTS ||--o{ RECONCILIATION_RUNS : "used in"
+    RECONCILIATION_RUNS ||--o{ RECONCILIATION_RESULTS : "produces"
+    BANK_TRANSACTIONS ||--o{ RECONCILIATION_RESULTS : "classified as"
 
     ADMIN_USERS {
         bigint id PK
@@ -90,7 +96,7 @@ erDiagram
         bigint id PK
         uuid public_id UK
         bigint payment_session_id FK "ON DELETE RESTRICT"
-        varchar utr UK "Globally unique UTR index"
+        varchar utr "Optional — NULL if not submitted by participant"
         varchar status "SUBMITTED, REVIEW_REQUIRED, APPROVED, REJECTED"
         timestamptz submitted_at
         bigint reviewed_by FK "ON DELETE RESTRICT"
@@ -132,7 +138,7 @@ erDiagram
         bigint statement_import_id FK "ON DELETE RESTRICT"
         timestamptz transaction_at
         bigint amount_inr "Whole rupees"
-        varchar direction "CREDIT, DEBIT"
+        varchar direction "CREDIT, DEBIT — NULL if not mapped during import"
         varchar reference_id "Primary payment reference"
         varchar utr "12-digit UTR"
         varchar counterparty_name
@@ -140,6 +146,46 @@ erDiagram
         varchar source "GOOGLE_PAY"
         varchar source_transaction_key "SHA-256 fingerprint hash"
         jsonb raw_row_data
+        timestamptz created_at
+    }
+
+    RECONCILIATION_RUNS {
+        bigint id PK
+        uuid public_id UK
+        bigint statement_import_id FK "ON DELETE RESTRICT"
+        bigint batch_id FK "ON DELETE RESTRICT"
+        bigint initiated_by FK "ON DELETE RESTRICT"
+        varchar status "RUNNING, COMPLETED, FAILED"
+        int total_transactions
+        int credit_transactions
+        int debit_transactions
+        int matched_count
+        int amount_mismatch_count
+        int unknown_reference_count
+        int no_reference_count
+        int utr_mismatch_count
+        int duplicate_transaction_count
+        int needs_review_count
+        int unmatched_count
+        timestamptz started_at
+        timestamptz completed_at
+        timestamptz created_at
+    }
+
+    RECONCILIATION_RESULTS {
+        bigint id PK
+        uuid public_id UK
+        bigint reconciliation_run_id FK "ON DELETE CASCADE"
+        bigint bank_transaction_id FK "ON DELETE RESTRICT"
+        bigint payment_session_id FK "ON DELETE RESTRICT, nullable"
+        bigint payment_submission_id FK "ON DELETE RESTRICT, nullable"
+        varchar status "MATCHED, AMOUNT_MISMATCH, UTR_MISMATCH, UNKNOWN_REFERENCE, NO_REFERENCE, DUPLICATE_TRANSACTION, UNMATCHED"
+        boolean reference_match
+        boolean amount_match
+        boolean utr_match
+        boolean payer_match
+        varchar reason_code
+        text explanation
         timestamptz created_at
     }
 ```
@@ -254,7 +300,7 @@ To maintain absolute historical financial auditability:
 | `payment_sessions` | `ix_payment_sessions_phone` | `phone` | Participant Lookup |
 | `payment_sessions` | `ix_payment_sessions_created_at`| `created_at` | Time-series Ordering |
 | `payment_sessions` | `ix_payment_sessions_batch_status`| `batch_id, status` | Cohort Payment Filtering |
-| `payment_submissions`| `ux_payment_submissions_utr` | `utr` | Global UTR Unique Index |
+| `payment_submissions`| `ix_payment_submissions_utr` | `utr` | Non-unique search index (UTR is now optional/nullable) |
 | `payment_submissions`| `ux_payment_submissions_current` | `payment_session_id WHERE is_current = TRUE` | Partial Unique Index |
 | `payment_submissions`| `ix_payment_submissions_payment_session`| `payment_session_id` | Foreign Key Lookup |
 | `payment_submissions`| `ix_payment_submissions_status` | `status` | Lifecycle Filtering |
@@ -266,6 +312,13 @@ To maintain absolute historical financial auditability:
 | `bank_transactions` | `ix_bank_transactions_source_key` | `source, source_transaction_key` | Deduplication Fingerprint Index |
 | `bank_transactions` | `ix_bank_transactions_reference_id` | `reference_id` | Reconciliation Primary Index |
 | `bank_transactions` | `ix_bank_transactions_utr` | `utr` | Bank UTR Secondary Index |
+| `reconciliation_runs` | `ux_reconciliation_runs_public_id` | `public_id` | Unique UUID Index |
+| `reconciliation_runs` | `ix_reconciliation_runs_batch_id` | `batch_id` | Batch Lookup Index |
+| `reconciliation_runs` | `ix_reconciliation_runs_statement_import_id` | `statement_import_id` | Statement Lookup Index |
+| `reconciliation_results` | `ux_reconciliation_results_public_id` | `public_id` | Unique UUID Index |
+| `reconciliation_results` | `ix_reconciliation_results_run_id` | `reconciliation_run_id` | Run Lookup Index |
+| `reconciliation_results` | `ix_reconciliation_results_payment_session_id` | `payment_session_id` | Session Lookup Index |
+| `reconciliation_results` | `ix_reconciliation_results_bank_transaction_id` | `bank_transaction_id` | Transaction Lookup Index |
 
 ---
 

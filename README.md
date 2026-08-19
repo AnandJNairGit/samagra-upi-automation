@@ -1,4 +1,4 @@
-# Samagra UPI Automation — Platform Foundation (Phase 1)
+# Samagra UPI Automation — Platform (Phases 1 – 10)
 
 Production-oriented foundation for the UPI training payment collection and reconciliation platform.
 
@@ -212,15 +212,16 @@ All three containers implement automated Docker health checks:
 
 | Phase | Feature Module | Status | Highlights |
 | :--- | :--- | :--- | :--- |
-| **Phase 1** | Platform Infrastructure | Completed | Docker 3-container topology, non-root security, host Caddy integration. |
-| **Phase 2** | Database Foundation | Completed | PostgreSQL 16 schema, Alembic migrations, whole-rupee monetary types. |
-| **Phase 3** | Admin Auth & Security | Completed | Argon2id password hashing, JWT Bearer tokens, HTTP-only refresh cookies. |
-| **Phase 4** | Course & Batch Management | Completed | Course & cohort CRUD, status state machines, financial snapshot invariance. |
-| **Phase 5** | Public Registration | Completed | Public checkout registration, input validation, rate-limiting safeguards. |
-| **Phase 6** | UPI Payment Session & QR | Completed | Dynamic UPI link generation, QR codes, immutable financial snapshots. |
-| **Phase 7** | UTR Submission & WhatsApp | Completed | Unique UTR submission, row locking concurrency, WhatsApp link generation. |
-| **Phase 8** | Admin Payment Dashboard | Completed | Paginated admin dashboard, filters, submission audit history inspection. |
-| **Phase 9** | Statement Import System | Completed | Google Pay & Bank CSV/XLSX multi-sheet parser, position mapping, deduplication key calculation, null reference filtering, import deletion. |
+| **Phase 1** | Platform Infrastructure | ✅ Completed | Docker 3-container topology, non-root security, host Caddy integration. |
+| **Phase 2** | Database Foundation | ✅ Completed | PostgreSQL 16 schema, Alembic migrations, whole-rupee monetary types. |
+| **Phase 3** | Admin Auth & Security | ✅ Completed | Argon2id password hashing, JWT Bearer tokens, HTTP-only refresh cookies. |
+| **Phase 4** | Course & Batch Management | ✅ Completed | Course & cohort CRUD, status state machines, financial snapshot invariance. |
+| **Phase 5** | Public Registration | ✅ Completed | Public checkout registration, input validation, rate-limiting safeguards. |
+| **Phase 6** | UPI Payment Session & QR | ✅ Completed | Dynamic UPI link generation, QR codes, immutable financial snapshots. |
+| **Phase 7** | UTR Submission & WhatsApp | ✅ Completed | Optional UTR submission, row locking concurrency, WhatsApp link generation. UTR is no longer required — reconciliation matches by reference code + amount. |
+| **Phase 8** | Admin Payment Dashboard | ✅ Completed | Paginated admin dashboard, filters, submission audit history inspection. |
+| **Phase 9** | Statement Import System | ✅ Completed | Google Pay & Bank CSV/XLSX multi-sheet parser, position mapping, deduplication key calculation, null reference filtering, import deletion. |
+| **Phase 10** | Reconciliation Engine | ✅ Completed | Deterministic batch-scoped matching engine, Match button in Admin Workspace, auto-APPROVED status on match, matched badges in Public Registrations table. |
 
 ---
 
@@ -236,4 +237,82 @@ The Phase 9 Statement Import system empowers administrators to upload Google Pay
 5. **Null Reference Row Exclusion**: Rows missing a valid Payment Reference Code are excluded from persistence and logged under `rows_without_reference`.
 6. **Import Deletion**: Delete endpoint `DELETE /v1/admin/statement-imports/{public_id}` and UI action modal permanently deletes statement imports and cascade deletes all linked bank transactions.
 7. **Accountant-Friendly UI**: Simple accounting terminology (`TOTAL ENTRIES`, `NEW TRANSACTIONS`, `SKIPPED (DUPES)`, `MISSING REF CODE`) with collapsible technical details.
+
+---
+
+## 10. Reconciliation Engine (Phase 10)
+
+The Phase 10 Reconciliation Engine enables administrators to match bank statement transactions against registered participant payments with a single click.
+
+### How It Works
+
+1. **Import a Bank Statement** — Upload a CSV or XLSX file via the Statement Import section.
+2. **Navigate to a Batch Workspace** — Open any batch in the Admin Workspace.
+3. **Select Statement + Click Match** — The top-right area of the **Public Registrations & Payments** table has a statement dropdown and a **Match** button.
+4. **Auto-Approve on Match** — Successfully matched sessions are automatically set to `APPROVED` and display a green **✓ Matched** badge inline in the table row.
+
+### Matching Algorithm (Deterministic, Batch-Scoped)
+
+For each bank transaction in the statement, the engine classifies it:
+
+| Result Status | Condition |
+| :--- | :--- |
+| `MATCHED` | Reference code found in batch AND amount matches. UTR optionally verified if both sides have it. Session auto-approved. |
+| `AMOUNT_MISMATCH` | Reference code found but bank amount ≠ expected session amount. |
+| `UTR_MISMATCH` | Reference code + amount match, but both UTRs are present and differ. |
+| `UNKNOWN_REFERENCE` | Reference code not found in this batch's sessions. |
+| `NO_REFERENCE` | Bank transaction has no reference code column value. |
+| `DUPLICATE_TRANSACTION` | Same reference code appears more than once in the statement file. |
+| `UNMATCHED` | Non-credit transaction (DEBIT / fee). |
+
+> [!NOTE]
+> If `direction` is NULL (not mapped during import), the engine safely treats the transaction as CREDIT. This handles split Debit/Credit column formats where only the amount was mapped.
+
+### UTR is Optional
+
+Participants are **not required** to submit a UTR number. The system reconciles using:
+- **Required**: Reference Code (generated at QR creation time, embedded in the UPI URI)
+- **Required**: Payment Amount (must match the batch fee exactly)
+- **Optional**: UTR — if both the bank statement and the participant provided a UTR, they are compared. If either is missing, matching still succeeds based on reference + amount alone.
+
+This change was applied across the entire stack:
+- `payment_submissions.utr` column is now `NULL`-able (migration applied)
+- `ux_payment_submissions_utr` unique index replaced with a non-unique search index
+- `PublicUTRSubmitRequest.utr` is `Optional[str]`
+- Public Payment Page shows UTR as **(optional)** with a submit-without-UTR button
+
+### Test Data Tooling (Root Directory)
+
+Three helper scripts at the project root power local manual testing:
+
+| Script | Purpose |
+| :--- | :--- |
+| [`seed_manual_test_data.py`](./seed_manual_test_data.py) | Creates 3 courses, 3 batches, 6 registered participants, and generates `demo_test_statement.csv` with 9 rows covering all result types |
+| [`clean_manual_test_data.py`](./clean_manual_test_data.py) | Removes only seed-tagged test data (courses, batches, sessions, submissions) |
+| [`clear_db.py`](./clear_db.py) | Truncates **all** business data while preserving admin user accounts |
+
+**Run from within Docker container:**
+```bash
+# Seed test data
+docker compose exec backend python /app/seed_manual_test_data.py
+
+# Clean only test data
+docker compose exec backend python /app/clean_manual_test_data.py
+
+# Wipe all business data (full reset)
+docker compose exec backend python /app/clear_db.py
+```
+
+### Generated Test CSV Column Layout
+
+`demo_test_statement.csv` uses this column order — map accordingly during Statement Import:
+
+| Col Index | Header | Import Field |
+| :--- | :--- | :--- |
+| 0 | Date | Transaction Date |
+| 1 | Description | Description |
+| **2** | **Ref No** | **Reference ID** ← Required |
+| **3** | **Direction** | **Direction** (CREDIT/DEBIT) ← Map this! |
+| **4** | **Amount** | **Amount** ← Required |
+| 5 | UTR | UTR (optional) |
 

@@ -32,7 +32,7 @@ class PaymentSubmission(Base, IdentityIdMixin, PublicIdMixin, TimestampMixin):
         ForeignKey("payment_sessions.id", ondelete="RESTRICT"),
         nullable=False,
     )
-    utr: Mapped[str] = mapped_column(String(100), nullable=False)
+    utr: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     status: Mapped[str] = mapped_column(
         String(30),
         default="SUBMITTED",
@@ -74,7 +74,8 @@ class PaymentSubmission(Base, IdentityIdMixin, PublicIdMixin, TimestampMixin):
             "status IN ('SUBMITTED', 'REVIEW_REQUIRED', 'APPROVED', 'REJECTED')",
             name="ck_payment_submissions_status",
         ),
-        Index("ux_payment_submissions_utr", "utr", unique=True),
+        # UTR unique index removed — UTR is now optional; NULL values can't be uniquely constrained
+        Index("ix_payment_submissions_utr", "utr"),  # non-unique index for search
         Index(
             "ux_payment_submissions_current",
             "payment_session_id",

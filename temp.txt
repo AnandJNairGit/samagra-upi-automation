@@ -19,3 +19,17 @@ Name: Samagra Dev Admin
 Email: admin@example.com
 Password: dev_admin_password_123!
 Name: Development Admin
+
+
+
+2. Running inside Docker container:
+bash
+docker compose exec backend python /app/seed_manual_test_data.py
+docker compose exec backend python /app/clean_manual_test_data.py
+
+
+
+Option B (Docker Container):
+bash
+docker compose exec backend python /app/clear_db.py
+

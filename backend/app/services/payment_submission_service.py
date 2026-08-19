@@ -34,15 +34,14 @@ class PaymentSubmissionService:
         self,
         db: AsyncSession,
         payment_session_public_id: uuid.UUID,
-        utr: str,
+        utr: Optional[str],
     ) -> tuple[PaymentSession, PaymentSubmission]:
-        """Submit a UTR for a payment session identified by public UUID with concurrency row locking (SELECT FOR UPDATE)."""
-        clean_utr = utr.strip()
-        if not clean_utr:
-            raise ValueError("Transaction reference (UTR) cannot be empty or whitespace only.")
-        if len(clean_utr) < 4:
+        """Submit payment confirmation for a session. UTR is optional — matching falls back to reference code + amount."""
+        # Normalise UTR — treat empty/whitespace as absent
+        clean_utr: Optional[str] = utr.strip() if utr and utr.strip() else None
+        if clean_utr and len(clean_utr) < 4:
             raise ValueError("Transaction reference (UTR) must be at least 4 characters long.")
-        if len(clean_utr) > 100:
+        if clean_utr and len(clean_utr) > 100:
             raise ValueError("Transaction reference (UTR) cannot exceed 100 characters.")
 
         # 1. Lock payment session row via SELECT ... FOR UPDATE
@@ -80,7 +79,7 @@ class PaymentSubmissionService:
         # 5. Create new current submission with server-generated submitted_at
         new_submission = PaymentSubmission(
             payment_session_id=payment_session.id,
-            utr=clean_utr,
+            utr=clean_utr,  # May be None if user didn't provide UTR
             status="SUBMITTED",
             is_current=True,
             submitted_at=now_utc,
@@ -89,8 +88,8 @@ class PaymentSubmissionService:
         try:
             await self.submission_repo.create(db, new_submission)
         except IntegrityError as exc:
-            # Check if failure is due to UTR uniqueness constraint
-            if "ux_payment_submissions_utr" in str(exc) or "utr" in str(exc).lower():
+            # Only a UTR uniqueness error if UTR was actually provided
+            if clean_utr and ("ix_payment_submissions_utr" in str(exc) or "utr" in str(exc).lower()):
                 raise DuplicateUTRError(clean_utr) from exc
             raise
 

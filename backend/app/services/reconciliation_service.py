@@ -102,8 +102,10 @@ class ReconciliationService:
             all_txs = list(res.scalars().all())
 
             # 5. Extract CREDIT transactions and reference IDs
-            credit_txs = [tx for tx in all_txs if (tx.direction or "").upper() == "CREDIT"]
-            debit_txs = [tx for tx in all_txs if (tx.direction or "").upper() != "CREDIT"]
+            # If direction is NULL (not mapped during import), treat as CREDIT
+            # (the importer skips rows with no amount, so only credit rows land here)
+            credit_txs = [tx for tx in all_txs if (tx.direction or "CREDIT").upper() == "CREDIT"]
+            debit_txs = [tx for tx in all_txs if (tx.direction or "CREDIT").upper() != "CREDIT"]
 
             ref_ids = [tx.reference_id.strip() for tx in credit_txs if tx.reference_id and tx.reference_id.strip()]
 
@@ -128,7 +130,8 @@ class ReconciliationService:
             unmatched_count = 0
 
             for tx in all_txs:
-                is_credit = (tx.direction or "").upper() == "CREDIT"
+                # If direction is NULL (not mapped), default to CREDIT
+                is_credit = (tx.direction or "CREDIT").upper() == "CREDIT"
                 raw_ref = (tx.reference_id or "").strip()
 
                 if not is_credit:

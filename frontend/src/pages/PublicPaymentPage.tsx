@@ -109,15 +109,7 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
 
   const handleUTRSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanUTR = utrInput.trim();
-    if (!cleanUTR) {
-      setSubmitError('Please enter your 12-digit transaction reference (UTR) number.');
-      return;
-    }
-    if (cleanUTR.length < 4) {
-      setSubmitError('Transaction reference (UTR) must be at least 4 characters long.');
-      return;
-    }
+    const cleanUTR = utrInput.trim() || null;  // Treat empty as null — UTR is optional
 
     if (!session) return;
 
@@ -410,11 +402,11 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
               <strong>{formatINR(session.amount_inr)}</strong>.
             </li>
             <li>
-              Complete the payment. Keep your <strong>12-digit UPI Reference (UTR) number</strong>{' '}
-              safe from your transaction receipt.
+              Complete the payment. If your UPI app shows a{' '}
+              <strong>12-digit UTR/Reference number</strong>, note it down — it helps speed up verification.
             </li>
             <li>
-              Enter the UTR number below to submit your payment details for verification.
+              Click <strong>"Confirm Payment Submitted"</strong> below. UTR is optional but recommended.
             </li>
           </ol>
         </div>
@@ -488,9 +480,10 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
             <div className="utr-form-header">
               <div className="utr-step-badge">Step 2</div>
               <div>
-                <h3 className="utr-form-title">Submit Transaction Reference (UTR)</h3>
+                <h3 className="utr-form-title">Confirm Payment Submitted</h3>
                 <p className="utr-form-subtitle">
-                  After completing your UPI payment, enter the 12-digit transaction reference number to submit.
+                  After completing your UPI payment, click below to confirm. You can optionally enter the
+                  UTR / transaction reference number if your app shows one.
                 </p>
               </div>
             </div>
@@ -505,13 +498,14 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
             <form onSubmit={handleUTRSubmit} className="utr-form">
               <div className="form-group">
                 <label className="form-label" htmlFor="utrInput">
-                  UPI Reference / UTR Number <span className="required-star">*</span>
+                  UPI Reference / UTR Number{' '}
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
                 </label>
                 <input
                   id="utrInput"
                   type="text"
                   className={`form-input monospace ${submitError ? 'input-error' : ''}`}
-                  placeholder="e.g. 123456789012"
+                  placeholder="e.g. 123456789012 (leave blank if not available)"
                   value={utrInput}
                   onChange={(e) => {
                     setUtrInput(e.target.value);
@@ -523,14 +517,15 @@ export const PublicPaymentPage: React.FC<PublicPaymentPageProps> = ({
                   spellCheck={false}
                 />
                 <span className="form-hint">
-                  Found on your transaction confirmation screen in Google Pay, PhonePe, Paytm, or BHIM.
+                  Found on your transaction confirmation in Google Pay, PhonePe, Paytm, or BHIM.
+                  Leave blank if your app doesn't show one — your payment will still be verified.
                 </span>
               </div>
 
               <button
                 type="submit"
                 className="btn btn-primary btn-submit-utr"
-                disabled={submitting || !utrInput.trim()}
+                disabled={submitting}
               >
                 {submitting ? (
                   <>

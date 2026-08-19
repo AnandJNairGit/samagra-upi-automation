@@ -142,7 +142,7 @@ docker compose exec -e DEV_ADMIN_PASSWORD="adminpassword123" backend python scri
 ```
 Default Development Credentials:
 - **Email**: `admin@example.com`
-- **Password**: `adminpassword123`
+- **Password**: `dev_admin_password_123!` (set in `.env` as `DEV_ADMIN_PASSWORD`)
 
 ### Stop Development Stack
 ```bash
@@ -323,3 +323,62 @@ curl http://<SERVER_PUBLIC_IP>:5432/           # -> Connection refused
 ```
 
 Only the Host Caddy on port 80/443 forwards requests to the internal services.
+
+---
+
+## 11. Manual Test Data & Reconciliation Testing
+
+Three root-level Python scripts support manual testing of the full payment → reconciliation flow.
+
+### Available Scripts
+
+| Script | Description |
+| :--- | :--- |
+| `seed_manual_test_data.py` | Creates 3 courses, 3 batches, 6 participant sessions & submissions. Generates `demo_test_statement.csv` with 9 rows covering all reconciliation result types. |
+| `clean_manual_test_data.py` | Deletes only test-seeded records (tagged `[MANUAL_TEST_SEED]`). Preserves real data. |
+| `clear_db.py` | Truncates **all** business tables (courses, batches, sessions, submissions, bank transactions, statement imports, reconciliation runs & results). Admin accounts are preserved. |
+
+### Running the Scripts
+
+```bash
+# Step 1: Seed courses, batches, participants, and generate the test CSV
+docker compose exec backend python /app/seed_manual_test_data.py
+
+# Step 2: Copy the generated CSV to host (if running from inside Docker)
+docker compose cp backend:/tmp/demo_test_statement.csv ./demo_test_statement.csv
+
+# Step 3: Clean only seeded test records (preserves real data)
+docker compose exec backend python /app/clean_manual_test_data.py
+
+# Step 4: Full database reset (clears everything except admin accounts)
+docker compose exec backend python /app/clear_db.py
+```
+
+### Manual Reconciliation Test Workflow
+
+1. **Seed the database**: `docker compose exec backend python /app/seed_manual_test_data.py`
+2. **Log in** to the admin portal at `http://localhost:5173/upi/admin/login`
+   - Email: `admin@example.com` | Password: `dev_admin_password_123!`
+3. **Import the CSV**: Go to the Statement Import section and upload `demo_test_statement.csv`
+4. **Column mapping** during import:
+   - Col 2 → Reference ID (**Required**)
+   - Col 3 → Direction (CREDIT/DEBIT)
+   - Col 4 → Amount (**Required**)
+   - Col 5 → UTR (optional)
+5. **Navigate to a Batch Workspace**: e.g., "FSWD Morning Batch (Jan 2026)"
+6. **In Public Registrations & Payments table**: Select the imported statement from the dropdown and click **Match**
+7. **Expected result**: Rows with matching reference codes and amounts turn green with a **✓ Matched** badge
+
+### Test CSV Row Coverage
+
+| Row | Reference | Expected Result |
+| :--- | :--- | :--- |
+| 1 | `REF-FSWD-101` | ✅ `MATCHED` (ref + amount both match) |
+| 2 | `REF-DSAI-201` | ✅ `MATCHED` |
+| 3 | `REF-DEVOPS-301` | ✅ `MATCHED` |
+| 4 | `REF-FSWD-102` | ⚠️ `AMOUNT_MISMATCH` (₹4,500 paid, ₹5,000 expected) |
+| 5 | `REF-DSAI-202` | ⚠️ `UTR_MISMATCH` (wrong UTR submitted) |
+| 6 | `REF-UNKNOWN-999` | ❌ `UNKNOWN_REFERENCE` (no matching session in batch) |
+| 7 | *(empty)* | ❌ `NO_REFERENCE` (no reference code) |
+| 8 | `FEE-AUG-2026` (DEBIT) | ❌ `UNMATCHED` (debit transaction) |
+| 9 | `REF-DEVOPS-301` (2nd) | ⚠️ `DUPLICATE_TRANSACTION` (same ref appears twice) |
