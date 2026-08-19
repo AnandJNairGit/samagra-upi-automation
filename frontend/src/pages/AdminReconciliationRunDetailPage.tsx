@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import AdminNav from '../components/AdminNav';
 import { reconciliationApi } from '../services/reconciliationApi';
 import {
-  ReconciliationResultDetailResponse,
   ReconciliationResultResponse,
   ReconciliationRunResponse,
 } from '../types/reconciliation';
+import { ReconciliationInspectionModal } from '../components/reconciliation/ReconciliationInspectionModal';
 import {
   GitCompare,
   ArrowLeft,
@@ -16,9 +16,6 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  X,
-  Check,
-  Minus,
 } from 'lucide-react';
 
 interface AdminReconciliationRunDetailPageProps {
@@ -53,9 +50,7 @@ export const AdminReconciliationRunDetailPage: React.FC<AdminReconciliationRunDe
   const [activeSearch, setActiveSearch] = useState<string>('');
 
   // Inspection Modal State
-  const [modalOpen, setModalOpen] = useState(false);
-  const [detailItem, setDetailItem] = useState<ReconciliationResultDetailResponse | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [selectedResultPublicId, setSelectedResultPublicId] = useState<string | null>(null);
 
   const fetchRunDetail = async () => {
     try {
@@ -103,18 +98,8 @@ export const AdminReconciliationRunDetailPage: React.FC<AdminReconciliationRunDe
     setActiveSearch(searchInput.trim());
   };
 
-  const handleOpenDetailModal = async (resultPublicId: string) => {
-    setModalOpen(true);
-    setDetailLoading(true);
-    setDetailItem(null);
-    try {
-      const res = await reconciliationApi.getReconciliationResultDetail(resultPublicId);
-      setDetailItem(res);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load result inspection details.');
-    } finally {
-      setDetailLoading(false);
-    }
+  const handleOpenDetailModal = (resultPublicId: string) => {
+    setSelectedResultPublicId(resultPublicId);
   };
 
   const renderStatusBadge = (status: string) => {
@@ -136,16 +121,6 @@ export const AdminReconciliationRunDetailPage: React.FC<AdminReconciliationRunDe
       default:
         return <span className="status-pill">{status}</span>;
     }
-  };
-
-  const renderIndicator = (val?: boolean | null) => {
-    if (val === true) {
-      return <span style={{ color: '#34d399', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '2px' }}><Check size={14} /> Yes</span>;
-    }
-    if (val === false) {
-      return <span style={{ color: '#f87171', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '2px' }}><X size={14} /> No</span>;
-    }
-    return <span style={{ color: '#94a3b8', display: 'inline-flex', alignItems: 'center', gap: '2px' }}><Minus size={14} /> N/A</span>;
   };
 
   return (
@@ -416,108 +391,12 @@ export const AdminReconciliationRunDetailPage: React.FC<AdminReconciliationRunDe
         )}
       </div>
 
-      {/* Read-Only Inspection Modal (ZERO APPROVE/REJECT CONTROLS) */}
-      {modalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '640px' }}>
-            <div className="modal-header">
-              <div>
-                <h3>Reconciliation Result Evidence</h3>
-                <span className="field-hint">Read-Only Audit Inspection (Phase 10)</span>
-              </div>
-              <button onClick={() => setModalOpen(false)} className="icon-btn">
-                <X size={16} />
-              </button>
-            </div>
-
-            {detailLoading ? (
-              <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-                <Loader2 size={32} className="spinner" color="#818cf8" />
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.5rem' }}>Loading result evidence...</p>
-              </div>
-            ) : detailItem ? (
-              <div>
-                <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <span className="field-hint">Classification Result</span>
-                    <div style={{ marginTop: '4px' }}>{renderStatusBadge(detailItem.status)}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span className="field-hint">Reason Code</span>
-                    <div style={{ fontFamily: 'monospace', fontWeight: 600, color: '#e2e8f0', fontSize: '0.85rem' }}>
-                      {detailItem.reason_code}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="error-banner" style={{ background: 'rgba(99,102,241,0.1)', borderColor: 'rgba(99,102,241,0.3)', color: '#e0e7ff', marginBottom: '20px' }}>
-                  <AlertCircle size={16} color="#818cf8" />
-                  <span>{detailItem.explanation}</span>
-                </div>
-
-                {/* Evidence Flags Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px', background: 'rgba(0,0,0,0.3)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                  <div>
-                    <span className="field-hint" style={{ display: 'block' }}>Reference Match</span>
-                    {renderIndicator(detailItem.reference_match)}
-                  </div>
-                  <div>
-                    <span className="field-hint" style={{ display: 'block' }}>Amount Match</span>
-                    {renderIndicator(detailItem.amount_match)}
-                  </div>
-                  <div>
-                    <span className="field-hint" style={{ display: 'block' }}>UTR Match</span>
-                    {renderIndicator(detailItem.utr_match)}
-                  </div>
-                </div>
-
-                {/* Side-by-Side Comparison Details */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-                  {/* Bank Transaction Data */}
-                  <div className="summary-section" style={{ padding: '14px' }}>
-                    <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: '#38bdf8', marginBottom: '10px', textTransform: 'uppercase' }}>
-                      Imported Bank Transaction
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem' }}>
-                      <div><span className="field-hint">Reference:</span> <span style={{ fontFamily: 'monospace', color: '#f8fafc' }}>{detailItem.bank_reference_id || '-'}</span></div>
-                      <div><span className="field-hint">Amount:</span> <span style={{ fontFamily: 'monospace', color: '#34d399', fontWeight: 600 }}>₹{detailItem.bank_amount_inr ?? 0}</span></div>
-                      <div><span className="field-hint">Bank UTR:</span> <span style={{ fontFamily: 'monospace', color: '#38bdf8' }}>{detailItem.bank_utr || '-'}</span></div>
-                      <div><span className="field-hint">Payer Name:</span> <span style={{ color: '#e2e8f0' }}>{detailItem.bank_counterparty_name || '-'}</span></div>
-                      <div><span className="field-hint">Date:</span> <span style={{ color: '#94a3b8' }}>{detailItem.bank_transaction_at ? new Date(detailItem.bank_transaction_at).toLocaleString() : '-'}</span></div>
-                    </div>
-                  </div>
-
-                  {/* System Payment Session Data */}
-                  <div className="summary-section" style={{ padding: '14px' }}>
-                    <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: '#a5b4fc', marginBottom: '10px', textTransform: 'uppercase' }}>
-                      System Payment Session
-                    </h4>
-                    {detailItem.expected_reference_id ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem' }}>
-                        <div><span className="field-hint">Reference:</span> <span style={{ fontFamily: 'monospace', color: '#f8fafc' }}>{detailItem.expected_reference_id}</span></div>
-                        <div><span className="field-hint">Expected Amt:</span> <span style={{ fontFamily: 'monospace', color: '#f8fafc', fontWeight: 600 }}>₹{detailItem.expected_amount_inr}</span></div>
-                        <div><span className="field-hint">Submitted UTR:</span> <span style={{ fontFamily: 'monospace', color: '#38bdf8' }}>{detailItem.submitted_utr || 'Not Submitted'}</span></div>
-                        <div><span className="field-hint">Participant:</span> <span style={{ color: '#e2e8f0' }}>{detailItem.participant_name || '-'}</span></div>
-                        <div><span className="field-hint">Session Status:</span> <span style={{ color: '#a5b4fc', fontWeight: 600 }}>{detailItem.payment_session_status}</span></div>
-                      </div>
-                    ) : (
-                      <p style={{ fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic' }}>
-                        No matching PaymentSession record found in database.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="modal-footer">
-                  <button onClick={() => setModalOpen(false)} className="btn btn-outline" style={{ width: '100%' }}>
-                    Close Inspection Window
-                  </button>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      )}
+      {/* Reusable Reconciliation Inspection Modal */}
+      <ReconciliationInspectionModal
+        isOpen={!!selectedResultPublicId}
+        onClose={() => setSelectedResultPublicId(null)}
+        resultPublicId={selectedResultPublicId}
+      />
     </div>
   );
 };

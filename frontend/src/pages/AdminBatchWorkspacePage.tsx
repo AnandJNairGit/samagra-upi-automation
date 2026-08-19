@@ -14,7 +14,8 @@ import {
   ImportSummaryResponse,
   StatementColumnMapping,
 } from '../types/statementImport';
-import { ReconciliationRunResponse, ReconciliationResultResponse, ReconciliationResultDetailResponse } from '../types/reconciliation';
+import { ReconciliationRunResponse, ReconciliationResultResponse } from '../types/reconciliation';
+import { ReconciliationInspectionModal } from '../components/reconciliation/ReconciliationInspectionModal';
 import { config } from '../core/config';
 import {
   CreditCard,
@@ -25,6 +26,7 @@ import {
   Check,
   RefreshCw,
   Loader2,
+  AlertCircle,
   AlertTriangle,
   CheckCircle2,
   Search,
@@ -111,7 +113,8 @@ export const AdminBatchWorkspacePage: React.FC<AdminBatchWorkspacePageProps> = (
   const [reconResultsLoading, setReconResultsLoading] = useState(false);
   const [reconFilter, setReconFilter] = useState<'ALL' | 'MATCHED' | 'NOT_MATCHED'>('ALL');
   const [startingRecon, setStartingRecon] = useState(false);
-  const [selectedResultDetail, setSelectedResultDetail] = useState<ReconciliationResultDetailResponse | null>(null);
+  const [inspectingResultPublicId, setInspectingResultPublicId] = useState<string | null>(null);
+  const [inspectingSessionPublicId, setInspectingSessionPublicId] = useState<string | null>(null);
 
   // Map Reconciliation Results by Payment Session Public ID & Reference Code
   const reconResultsBySession = useMemo(() => {
@@ -313,13 +316,8 @@ export const AdminBatchWorkspacePage: React.FC<AdminBatchWorkspacePageProps> = (
   };
 
   // Open Reconciliation Result Detail
-  const openResultDetail = async (resultPublicId: string) => {
-    try {
-      const detail = await reconciliationApi.getReconciliationResultDetail(resultPublicId);
-      setSelectedResultDetail(detail);
-    } catch (err: any) {
-      alert(err.message);
-    }
+  const openResultDetail = (resultPublicId: string) => {
+    setInspectingResultPublicId(resultPublicId);
   };
 
   // Open Wizard Modal
@@ -775,7 +773,20 @@ export const AdminBatchWorkspacePage: React.FC<AdminBatchWorkspacePageProps> = (
                           </td>
                           <td className="text-sm">{new Date(p.created_at).toLocaleDateString()}</td>
                           <td>
-                            <button onClick={() => openPaymentDetail(p.payment_session_public_id)} className="btn-action">
+                            <button
+                              onClick={() => {
+                                const reconRes = reconResultsBySession[p.payment_session_public_id] || reconResultsBySession[p.reference_id];
+                                if (reconRes) {
+                                  setInspectingResultPublicId(reconRes.public_id);
+                                } else if (p.payment_session_status === 'APPROVED' || p.payment_session_status === 'REVIEW_REQUIRED' || p.payment_session_status === 'REJECTED') {
+                                  setInspectingSessionPublicId(p.payment_session_public_id);
+                                } else {
+                                  openPaymentDetail(p.payment_session_public_id);
+                                }
+                              }}
+                              className="btn-action"
+                              title={reconResultsBySession[p.payment_session_public_id] || reconResultsBySession[p.reference_id] ? 'Inspect Reconciliation Comparison' : 'Inspect Payment Session'}
+                            >
                               <Eye size={14} /> Inspect
                             </button>
                           </td>
@@ -1491,62 +1502,106 @@ export const AdminBatchWorkspacePage: React.FC<AdminBatchWorkspacePageProps> = (
         </div>
       )}
 
-      {/* Payment Session Inspection Drawer / Modal */}
+      {/* 1. Payment Session Inspection Drawer / Modal (When no reconciliation result exists yet) */}
       {selectedPayment && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '560px' }}>
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedPayment(null);
+          }}
+        >
+          <div className="modal-card" style={{ maxWidth: '580px', background: '#0f172a', border: '1px solid rgba(129, 140, 248, 0.3)' }}>
             <div className="modal-header">
-              <h3>Payment Session Inspection</h3>
-              <button onClick={() => setSelectedPayment(null)} className="icon-btn"><X size={18} /></button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CreditCard size={20} color="#818cf8" />
+                <h3 style={{ margin: 0, fontSize: '1.15rem' }}>Payment Session Inspection</h3>
+              </div>
+              <button onClick={() => setSelectedPayment(null)} className="icon-btn">
+                <X size={18} />
+              </button>
             </div>
-            <div style={{ padding: '1rem 0' }}>
-              <p><strong>Participant:</strong> {selectedPayment.participant.full_name} ({selectedPayment.participant.phone})</p>
-              <p><strong>Reference ID:</strong> <code style={{ color: '#38bdf8' }}>{selectedPayment.payment.reference_id}</code></p>
-              <p><strong>Status:</strong> {selectedPayment.payment.status}</p>
-              <p><strong>Amount:</strong> {formatINR(selectedPayment.payment.amount_inr)}</p>
-              <p><strong>Submitted UTR:</strong> {selectedPayment.current_submission?.utr || '—'}</p>
+
+            <div style={{ padding: '0.5rem 0' }}>
+              {/* Clear Notice indicating no reconciliation comparison has been performed yet */}
+              <div
+                style={{
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  fontSize: '0.85rem',
+                  color: '#93c5fd',
+                }}
+              >
+                <AlertCircle size={18} color="#60a5fa" style={{ flexShrink: 0 }} />
+                <span>This payment session has not yet been compared against an imported statement.</span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.875rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+                  <span style={{ color: '#94a3b8' }}>Participant:</span>
+                  <span style={{ fontWeight: 600, color: '#f8fafc' }}>
+                    {selectedPayment.participant.full_name} ({selectedPayment.participant.phone})
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+                  <span style={{ color: '#94a3b8' }}>Email:</span>
+                  <span style={{ color: '#e2e8f0' }}>{selectedPayment.participant.email}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+                  <span style={{ color: '#94a3b8' }}>Reference ID:</span>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#38bdf8' }}>{selectedPayment.payment.reference_id}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+                  <span style={{ color: '#94a3b8' }}>Amount:</span>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#34d399' }}>{formatINR(selectedPayment.payment.amount_inr)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+                  <span style={{ color: '#94a3b8' }}>Session Status:</span>
+                  <span className={`status-pill ${selectedPayment.payment.status === 'APPROVED' ? 'active-pill' : selectedPayment.payment.status === 'SUBMITTED' ? 'inactive-pill' : 'archived-pill'}`}>
+                    {selectedPayment.payment.status}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+                  <span style={{ color: '#94a3b8' }}>Submitted UTR:</span>
+                  <span style={{ fontFamily: 'monospace', color: '#e2e8f0' }}>{selectedPayment.current_submission?.utr || 'Not Submitted (Optional)'}</span>
+                </div>
+                {selectedPayment.current_submission && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+                    <span style={{ color: '#94a3b8' }}>Submission Status:</span>
+                    <span style={{ color: '#e2e8f0' }}>{selectedPayment.current_submission.status}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#94a3b8' }}>Created Date:</span>
+                  <span style={{ color: '#94a3b8' }}>{new Date(selectedPayment.payment.created_at).toLocaleString()}</span>
+                </div>
+              </div>
             </div>
-            <div className="modal-footer">
-              <button onClick={() => setSelectedPayment(null)} className="btn btn-outline">Close</button>
+
+            <div className="modal-footer" style={{ marginTop: '16px' }}>
+              <button onClick={() => setSelectedPayment(null)} className="btn btn-outline">
+                Close
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Reconciliation Result Detail Modal */}
-      {selectedResultDetail && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '600px' }}>
-            <div className="modal-header">
-              <h3>Reconciliation Result Breakdown</h3>
-              <button onClick={() => setSelectedResultDetail(null)} className="icon-btn"><X size={18} /></button>
-            </div>
-            <div style={{ padding: '1rem 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <h5 style={{ color: '#818cf8', marginBottom: '8px' }}>Bank Transaction</h5>
-                <p><strong>Statement File:</strong> {selectedResultDetail.statement_filename}</p>
-                <p><strong>Bank Reference:</strong> {selectedResultDetail.bank_reference_id || '—'}</p>
-                <p><strong>Bank Amount:</strong> {selectedResultDetail.bank_amount_inr ? formatINR(selectedResultDetail.bank_amount_inr) : '—'}</p>
-                <p><strong>Bank UTR:</strong> {selectedResultDetail.bank_utr || '—'}</p>
-                <p><strong>Payer:</strong> {selectedResultDetail.bank_counterparty_name || '—'}</p>
-              </div>
-              <div>
-                <h5 style={{ color: '#38bdf8', marginBottom: '8px' }}>Expected Application Payment</h5>
-                <p><strong>Participant:</strong> {selectedResultDetail.participant_name || '—'}</p>
-                <p><strong>Expected Ref:</strong> {selectedResultDetail.expected_reference_id || '—'}</p>
-                <p><strong>Expected Amount:</strong> {selectedResultDetail.expected_amount_inr ? formatINR(selectedResultDetail.expected_amount_inr) : '—'}</p>
-                <p><strong>Submitted UTR:</strong> {selectedResultDetail.submitted_utr || '—'}</p>
-              </div>
-            </div>
-            <div style={{ background: 'var(--bg-secondary)', padding: '12px', borderRadius: '6px', marginTop: '1rem' }}>
-              <strong>Result Verdict:</strong> {selectedResultDetail.explanation} ({selectedResultDetail.reason_code})
-            </div>
-            <div className="modal-footer">
-              <button onClick={() => setSelectedResultDetail(null)} className="btn btn-outline">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 2. Reusable Reconciliation Inspection Modal */}
+      <ReconciliationInspectionModal
+        isOpen={!!inspectingResultPublicId || !!inspectingSessionPublicId}
+        onClose={() => {
+          setInspectingResultPublicId(null);
+          setInspectingSessionPublicId(null);
+        }}
+        resultPublicId={inspectingResultPublicId}
+        paymentSessionPublicId={inspectingSessionPublicId}
+      />
     </div>
   );
 };

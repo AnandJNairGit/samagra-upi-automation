@@ -106,6 +106,7 @@ class ReconciliationResultDetailResponse(ReconciliationResultResponse):
     batch_name_snapshot: Optional[str] = None
     submission_status: Optional[str] = None
     submitted_at: Optional[datetime] = None
+    raw_row_data: Optional[dict] = None
 
 
 class ReconciliationResultListResponse(BaseModel):

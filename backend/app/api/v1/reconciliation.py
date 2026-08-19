@@ -146,3 +146,22 @@ async def get_reconciliation_result_detail(
         return await service.get_result_detail_by_public_id(db=db, public_id=result_public_id)
     except ReconciliationResultNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
+
+
+@router.get(
+    "/results/by-session/{payment_session_public_id}",
+    response_model=ReconciliationResultDetailResponse,
+    summary="Fetch latest reconciliation result by payment session",
+    description="Fetch full explainability inspection record for the most recent reconciliation result of a payment session.",
+)
+async def get_latest_reconciliation_result_by_session(
+    payment_session_public_id: uuid.UUID,
+    current_admin: AdminUser = require_admin,
+    db: AsyncSession = Depends(get_db),
+):
+    """Fetch full inspection detail for the most recent reconciliation result of a payment session."""
+    service = ReconciliationService()
+    try:
+        return await service.get_latest_result_by_payment_session_public_id(db=db, payment_session_public_id=payment_session_public_id)
+    except ReconciliationResultNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)

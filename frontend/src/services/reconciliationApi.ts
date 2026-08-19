@@ -107,4 +107,19 @@ export const reconciliationApi = {
 
     return response.json();
   },
+
+  getReconciliationResultBySession: async (
+    paymentSessionPublicId: string
+  ): Promise<ReconciliationResultDetailResponse> => {
+    const response = await apiFetch(`/v1/admin/reconciliation/results/by-session/${paymentSessionPublicId}`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to fetch result detail for session.');
+    }
+
+    return response.json();
+  },
 };

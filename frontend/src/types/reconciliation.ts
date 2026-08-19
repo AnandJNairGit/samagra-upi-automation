@@ -80,6 +80,7 @@ export interface ReconciliationResultDetailResponse extends ReconciliationResult
   batch_name_snapshot?: string;
   submission_status?: string;
   submitted_at?: string;
+  raw_row_data?: Record<string, unknown> | null;
 }
 
 export interface ReconciliationResultListResponse {

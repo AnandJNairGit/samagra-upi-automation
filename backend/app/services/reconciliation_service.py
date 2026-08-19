@@ -502,15 +502,11 @@ class ReconciliationService:
         if not item:
             raise ReconciliationResultNotFoundError(str(public_id))
 
-        res, bt, ps, sub, si = item
-
-        # Fetch run public ID
-        run_item = await self.reconciliation_repo.get_run_by_public_id(db, res.reconciliation_run.public_id)
-        run_pub_id = run_item[0].public_id if run_item else res.reconciliation_run.public_id
+        res, bt, ps, sub, si, run = item
 
         return ReconciliationResultDetailResponse(
             public_id=res.public_id,
-            reconciliation_run_public_id=run_pub_id,
+            reconciliation_run_public_id=run.public_id,
             bank_transaction_public_id=bt.public_id,
             payment_session_public_id=ps.public_id if ps else None,
             payment_submission_public_id=sub.public_id if sub else None,
@@ -538,4 +534,48 @@ class ReconciliationService:
             batch_name_snapshot=ps.batch_name_snapshot if ps else None,
             submission_status=sub.status if sub else None,
             submitted_at=sub.submitted_at if sub else None,
+            raw_row_data=bt.raw_row_data,
+        )
+
+    async def get_latest_result_by_payment_session_public_id(
+        self, db: AsyncSession, payment_session_public_id: uuid.UUID
+    ) -> ReconciliationResultDetailResponse:
+        """Fetch full inspection detail for the most recent reconciliation result of a payment session."""
+        item = await self.reconciliation_repo.get_latest_result_by_payment_session_public_id(db, payment_session_public_id)
+        if not item:
+            raise ReconciliationResultNotFoundError(f"session {payment_session_public_id}")
+
+        res, bt, ps, sub, si, run = item
+
+        return ReconciliationResultDetailResponse(
+            public_id=res.public_id,
+            reconciliation_run_public_id=run.public_id,
+            bank_transaction_public_id=bt.public_id,
+            payment_session_public_id=ps.public_id if ps else None,
+            payment_submission_public_id=sub.public_id if sub else None,
+            status=res.status,
+            reason_code=res.reason_code,
+            explanation=res.explanation,
+            reference_match=res.reference_match,
+            amount_match=res.amount_match,
+            utr_match=res.utr_match,
+            payer_match=res.payer_match,
+            bank_reference_id=bt.reference_id,
+            bank_amount_inr=bt.amount_inr,
+            bank_utr=bt.utr,
+            bank_transaction_at=bt.transaction_at,
+            bank_counterparty_name=bt.counterparty_name,
+            expected_reference_id=ps.reference_id if ps else None,
+            expected_amount_inr=ps.amount_inr if ps else None,
+            submitted_utr=sub.utr if sub else None,
+            participant_name=ps.full_name if ps else None,
+            statement_filename=si.filename,
+            bank_direction=bt.direction,
+            bank_description=bt.description,
+            payment_session_status=ps.status if ps else None,
+            course_name_snapshot=ps.course_name_snapshot if ps else None,
+            batch_name_snapshot=ps.batch_name_snapshot if ps else None,
+            submission_status=sub.status if sub else None,
+            submitted_at=sub.submitted_at if sub else None,
+            raw_row_data=bt.raw_row_data,
         )

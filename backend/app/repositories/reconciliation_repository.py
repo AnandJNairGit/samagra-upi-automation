@@ -142,15 +142,33 @@ class ReconciliationRepository:
 
     async def get_result_detail_by_public_id(
         self, session: AsyncSession, public_id: uuid.UUID
-    ) -> Optional[tuple[ReconciliationResult, BankTransaction, Optional[PaymentSession], Optional[PaymentSubmission], StatementImport]]:
+    ) -> Optional[tuple[ReconciliationResult, BankTransaction, Optional[PaymentSession], Optional[PaymentSubmission], StatementImport, ReconciliationRun]]:
         """Fetch complete detail for a single reconciliation result."""
         stmt = (
-            select(ReconciliationResult, BankTransaction, PaymentSession, PaymentSubmission, StatementImport)
+            select(ReconciliationResult, BankTransaction, PaymentSession, PaymentSubmission, StatementImport, ReconciliationRun)
+            .join(ReconciliationRun, ReconciliationResult.reconciliation_run_id == ReconciliationRun.id)
             .join(BankTransaction, ReconciliationResult.bank_transaction_id == BankTransaction.id)
             .join(StatementImport, BankTransaction.statement_import_id == StatementImport.id)
             .outerjoin(PaymentSession, ReconciliationResult.payment_session_id == PaymentSession.id)
             .outerjoin(PaymentSubmission, ReconciliationResult.payment_submission_id == PaymentSubmission.id)
             .where(ReconciliationResult.public_id == public_id)
+        )
+        result = await session.execute(stmt)
+        return result.first()
+
+    async def get_latest_result_by_payment_session_public_id(
+        self, session: AsyncSession, payment_session_public_id: uuid.UUID
+    ) -> Optional[tuple[ReconciliationResult, BankTransaction, Optional[PaymentSession], Optional[PaymentSubmission], StatementImport, ReconciliationRun]]:
+        """Fetch the most recent reconciliation result detail for a given payment session."""
+        stmt = (
+            select(ReconciliationResult, BankTransaction, PaymentSession, PaymentSubmission, StatementImport, ReconciliationRun)
+            .join(ReconciliationRun, ReconciliationResult.reconciliation_run_id == ReconciliationRun.id)
+            .join(BankTransaction, ReconciliationResult.bank_transaction_id == BankTransaction.id)
+            .join(StatementImport, BankTransaction.statement_import_id == StatementImport.id)
+            .outerjoin(PaymentSession, ReconciliationResult.payment_session_id == PaymentSession.id)
+            .outerjoin(PaymentSubmission, ReconciliationResult.payment_submission_id == PaymentSubmission.id)
+            .where(PaymentSession.public_id == payment_session_public_id)
+            .order_by(ReconciliationResult.created_at.desc())
         )
         result = await session.execute(stmt)
         return result.first()

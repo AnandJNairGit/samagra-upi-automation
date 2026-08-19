@@ -7,7 +7,7 @@ import json
 import openpyxl
 import uuid
 import hashlib
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -239,6 +239,16 @@ class StatementImportService:
                     description=norm_desc,
                 )
 
+                raw_dict: Dict[str, Any] = {}
+                for k, v in enumerate(row):
+                    col_name = headers[k] if k < len(headers) and headers[k] else f"Column {k + 1}"
+                    if isinstance(v, (datetime, date)):
+                        raw_dict[col_name] = v.isoformat()
+                    elif isinstance(v, (int, float, bool)) or v is None:
+                        raw_dict[col_name] = v
+                    else:
+                        raw_dict[col_name] = str(v)
+
                 valid_rows += 1
                 parsed_candidates.append({
                     "row_idx": row_idx,
@@ -251,7 +261,7 @@ class StatementImportService:
                     "description": norm_desc,
                     "source": "GOOGLE_PAY",
                     "source_transaction_key": source_key,
-                    "raw_row_data": {str(k): str(v) for k, v in enumerate(row)},
+                    "raw_row_data": raw_dict,
                 })
 
             except Exception as exc:
