@@ -14,7 +14,8 @@ from app.schemas.admin_payment import (
 )
 from app.schemas.auth import AdminHealthResponse
 from app.services.admin_payment_service import AdminPaymentService
-from app.services.exceptions import PaymentSessionUnavailableError
+from app.services.payment_submission_service import PaymentSubmissionService
+from app.services.exceptions import InvalidSessionStateError, PaymentSessionUnavailableError
 
 router = APIRouter()
 
@@ -22,6 +23,11 @@ router = APIRouter()
 def get_admin_payment_service() -> AdminPaymentService:
     """Dependency injector for AdminPaymentService."""
     return AdminPaymentService()
+
+
+def get_payment_submission_service() -> PaymentSubmissionService:
+    """Dependency injector for PaymentSubmissionService."""
+    return PaymentSubmissionService()
 
 
 @router.get(
@@ -192,4 +198,43 @@ async def get_admin_payment_detail(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to load payment details.",
+        ) from exc
+
+
+@router.post(
+    "/payments/{payment_session_public_id}/approve",
+    response_model=AdminPaymentDetailResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Approve Payment Session",
+)
+async def approve_admin_payment(
+    payment_session_public_id: uuid.UUID,
+    current_admin: AdminUser = require_admin,
+    db: AsyncSession = Depends(get_db),
+    admin_payment_service: AdminPaymentService = Depends(get_admin_payment_service),
+    submission_service: PaymentSubmissionService = Depends(get_payment_submission_service),
+):
+    """Admin approval of a payment session and its submission."""
+    try:
+        await submission_service.approve_payment_session_by_public_id(
+            db=db,
+            payment_session_public_id=payment_session_public_id,
+            admin_id=current_admin.id,
+        )
+        await db.commit()
+        return await admin_payment_service.get_payment_detail(db, payment_session_public_id)
+    except PaymentSessionUnavailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=exc.message,
+        ) from exc
+    except InvalidSessionStateError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=exc.message,
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to approve payment session.",
         ) from exc

@@ -1,5 +1,5 @@
-import React from 'react';
-import { CreditCard, Search, Loader2, Play, Check, Eye } from 'lucide-react';
+import React, { useState } from 'react';
+import { CreditCard, Search, Loader2, Play, Check, Eye, CheckCircle } from 'lucide-react';
 import { BatchSummary } from '../../../types/batch';
 import { AdminPaymentListItem } from '../../../types/adminPayment';
 import { StatementImportListItem } from '../../../types/statementImport';
@@ -23,6 +23,7 @@ interface PaymentsTableProps {
   reconResultsBySession: Record<string, ReconciliationResultResponse>;
   onInspectReconResult: (resultPublicId: string) => void;
   onInspectPaymentSession: (sessionPublicId: string) => void;
+  onApprovePayment: (sessionPublicId: string) => Promise<void>;
 }
 
 export const PaymentsTable: React.FC<PaymentsTableProps> = ({
@@ -42,7 +43,24 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
   reconResultsBySession,
   onInspectReconResult,
   onInspectPaymentSession,
+  onApprovePayment,
 }) => {
+  const [approvingSessionId, setApprovingSessionId] = useState<string | null>(null);
+
+  const handleApprove = async (sessionPublicId: string, participantName: string) => {
+    if (!window.confirm(`Are you sure you want to approve the payment for ${participantName}?`)) {
+      return;
+    }
+    setApprovingSessionId(sessionPublicId);
+    try {
+      await onApprovePayment(sessionPublicId);
+    } catch (err: any) {
+      alert(`Approval failed: ${err.message || 'An error occurred.'}`);
+    } finally {
+      setApprovingSessionId(null);
+    }
+  };
+
   const formatINR = (val: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -279,21 +297,50 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
                       </td>
                       <td className="text-sm">{new Date(p.created_at).toLocaleDateString()}</td>
                       <td>
-                        <button
-                          onClick={() => {
-                            if (reconRes) {
-                              // Has a reconciliation result — open detailed side-by-side comparison modal
-                              onInspectReconResult(reconRes.public_id);
-                            } else {
-                              // Not reconciled — open payment session drawer
-                              onInspectPaymentSession(p.payment_session_public_id);
-                            }
-                          }}
-                          className="btn-action"
-                          title={reconRes ? 'Inspect Reconciliation Comparison' : 'Inspect Payment Session'}
-                        >
-                          <Eye size={14} /> Inspect
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <button
+                            onClick={() => {
+                              if (reconRes) {
+                                // Has a reconciliation result — open detailed side-by-side comparison modal
+                                onInspectReconResult(reconRes.public_id);
+                              } else {
+                                // Not reconciled — open payment session drawer
+                                onInspectPaymentSession(p.payment_session_public_id);
+                              }
+                            }}
+                            className="btn-action"
+                            title={reconRes ? 'Inspect Reconciliation Comparison' : 'Inspect Payment Session'}
+                          >
+                            <Eye size={14} /> Inspect
+                          </button>
+
+                          {p.payment_session_status !== 'APPROVED' && (
+                            <button
+                              onClick={() => handleApprove(p.payment_session_public_id, p.participant_name)}
+                              disabled={approvingSessionId === p.payment_session_public_id}
+                              className="btn-action"
+                              style={{
+                                color: '#34d399',
+                                borderColor: 'rgba(52, 211, 153, 0.4)',
+                                background: 'rgba(52, 211, 153, 0.08)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '4px 8px',
+                                fontSize: '0.78rem',
+                                fontWeight: 600,
+                              }}
+                              title="Approve Payment Session"
+                            >
+                              {approvingSessionId === p.payment_session_public_id ? (
+                                <Loader2 size={13} className="animate-spin" />
+                              ) : (
+                                <CheckCircle size={13} />
+                              )}
+                              {approvingSessionId === p.payment_session_public_id ? 'Approving...' : 'Approve'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

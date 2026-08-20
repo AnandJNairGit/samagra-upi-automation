@@ -17,6 +17,9 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0',
       port: 5173,
+      watch: {
+        usePolling: true,
+      },
       proxy: {
         // In local Docker dev, proxy /upi-api to the backend container at port 8000
         '/upi-api': {

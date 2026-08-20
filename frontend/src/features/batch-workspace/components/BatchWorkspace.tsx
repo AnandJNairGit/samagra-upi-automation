@@ -6,6 +6,7 @@ import { useBatchPayments } from '../hooks/useBatchPayments';
 import { useBatchReconciliation } from '../hooks/useBatchReconciliation';
 import { useStatementImports } from '../hooks/useStatementImports';
 import { usePaymentInspection } from '../hooks/usePaymentInspection';
+import { approveAdminPayment } from '../../../services/adminPaymentApi';
 
 import { BatchWorkspaceHeader } from './BatchWorkspaceHeader';
 import { BatchWorkspaceTabs } from './BatchWorkspaceTabs';
@@ -54,6 +55,13 @@ export const BatchWorkspace: React.FC<BatchWorkspaceProps> = ({
 
   // 5. Payment & Reconciliation Inspection
   const inspectionHook = usePaymentInspection();
+
+  // 6. Manual Admin Approval
+  const handleApprovePayment = async (sessionPublicId: string) => {
+    await approveAdminPayment(sessionPublicId);
+    await paymentsHook.loadPayments();
+    await loadBatchHeader();
+  };
 
   if (workspaceLoading) {
     return (
@@ -133,6 +141,7 @@ export const BatchWorkspace: React.FC<BatchWorkspaceProps> = ({
           reconResultsBySession={reconHook.reconResultsBySession}
           onInspectReconResult={inspectionHook.openReconciliationDetail}
           onInspectPaymentSession={inspectionHook.openPaymentDetail}
+          onApprovePayment={handleApprovePayment}
         />
       )}
 

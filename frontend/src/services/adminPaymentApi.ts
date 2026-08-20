@@ -81,3 +81,19 @@ export async function fetchAdminPaymentDetail(
   }
   return response.json();
 }
+
+/**
+ * Admin approve payment session by public UUID.
+ */
+export async function approveAdminPayment(
+  paymentSessionPublicId: string,
+): Promise<AdminPaymentDetailResponse> {
+  const response = await apiFetch(`/v1/admin/payments/${paymentSessionPublicId}/approve`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to approve payment.');
+  }
+  return response.json();
+}

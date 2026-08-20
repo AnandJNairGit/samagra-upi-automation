@@ -472,18 +472,27 @@ async def test_admin_payment_detail_uses_historical_snapshots_even_if_batch_upda
 
 
 @pytest.mark.asyncio
-async def test_no_mutation_endpoints_exist_in_phase8(
-    client: AsyncClient, admin_auth_headers: dict, sample_dataset
+async def test_admin_approve_payment_session(
+    client: AsyncClient, admin_auth_headers: dict, sample_dataset, db_session: AsyncSession
 ):
-    """Verify that Phase 8 strictly contains NO approval or rejection mutation endpoints."""
+    """Verify that admin can approve a submitted payment session."""
     ps_uuid = sample_dataset["submitted"].public_id
 
+    # 1. Unauthenticated approval fails with 401
+    res_unauth = await client.post(f"/v1/admin/payments/{ps_uuid}/approve")
+    assert res_unauth.status_code == 401
+
+    # 2. Authenticated approval succeeds with 200
     res_approve = await client.post(
         f"/v1/admin/payments/{ps_uuid}/approve", headers=admin_auth_headers
     )
-    assert res_approve.status_code in (404, 405)
+    assert res_approve.status_code == 200
+    data = res_approve.json()
+    assert data["payment"]["status"] == "APPROVED"
+    assert data["current_submission"]["status"] == "APPROVED"
 
-    res_reject = await client.post(
-        f"/v1/admin/payments/{ps_uuid}/reject", headers=admin_auth_headers
+    # 3. Subsequent approval on already approved session raises 409 Conflict
+    res_duplicate = await client.post(
+        f"/v1/admin/payments/{ps_uuid}/approve", headers=admin_auth_headers
     )
-    assert res_reject.status_code in (404, 405)
+    assert res_duplicate.status_code == 409

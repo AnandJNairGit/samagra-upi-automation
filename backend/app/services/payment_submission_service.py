@@ -238,3 +238,49 @@ class PaymentSubmissionService:
         await self.session_repo.update(db, payment_session)
 
         return submission
+
+    async def approve_payment_session_by_public_id(
+        self,
+        db: AsyncSession,
+        payment_session_public_id: uuid.UUID,
+        admin_id: int,
+    ) -> PaymentSession:
+        """Approve a payment session and its current submission (if present) with row locking."""
+        # 1. Lock payment session row
+        payment_session = await self.session_repo.get_by_public_id_for_update(
+            db, payment_session_public_id
+        )
+        if not payment_session:
+            raise PaymentSessionUnavailableError("Payment session not found.")
+
+        # 2. Validate session state
+        if payment_session.status == "APPROVED":
+            raise InvalidSessionStateError(
+                current_status=payment_session.status,
+                action="approve_payment_session",
+                message="This payment session is already approved.",
+            )
+        if payment_session.status == "EXPIRED":
+            raise InvalidSessionStateError(
+                current_status=payment_session.status,
+                action="approve_payment_session",
+                message="Cannot approve an expired payment session.",
+            )
+
+        now_utc = datetime.now(timezone.utc)
+
+        # 3. Lock current submission if exists
+        submission = await self.submission_repo.get_current_for_session_for_update(
+            db, payment_session.id
+        )
+        if submission:
+            submission.status = "APPROVED"
+            submission.reviewed_by = admin_id
+            submission.reviewed_at = now_utc
+            await self.submission_repo.update(db, submission)
+
+        # 4. Synchronize payment session status to APPROVED
+        payment_session.status = "APPROVED"
+        await self.session_repo.update(db, payment_session)
+
+        return payment_session
