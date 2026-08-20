@@ -254,10 +254,6 @@ class ReconciliationService:
                                 utr_info = " UTR verified." if utr_match is True else " (UTR not provided or missing)."
                                 explanation = f"Reference code and amount matched successfully.{utr_info}"
                                 matched_count += 1
-                                if ps:
-                                    ps.status = "APPROVED"
-                                if sub:
-                                    sub.status = "APPROVED"
 
                 res_obj = ReconciliationResult(
                     reconciliation_run_id=run.id,

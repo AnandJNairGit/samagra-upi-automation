@@ -63,7 +63,7 @@ async def list_reconciliation_runs(
     statement_import_public_id: Optional[uuid.UUID] = Query(None, description="Filter runs by statement import UUID"),
     batch_public_id: Optional[uuid.UUID] = Query(None, description="Filter runs by batch UUID"),
     page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    page_size: int = Query(20, ge=1, le=500, description="Items per page"),
     current_admin: AdminUser = require_admin,
     db: AsyncSession = Depends(get_db),
 ):
@@ -109,7 +109,7 @@ async def list_reconciliation_results_for_run(
     reason_code: Optional[str] = Query(None, description="Filter by machine reason code"),
     search: Optional[str] = Query(None, description="Search by reference ID, UTR, or participant name"),
     page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    page_size: int = Query(20, ge=1, le=500, description="Items per page"),
     current_admin: AdminUser = require_admin,
     db: AsyncSession = Depends(get_db),
 ):

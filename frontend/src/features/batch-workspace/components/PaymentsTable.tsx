@@ -23,7 +23,6 @@ interface PaymentsTableProps {
   reconResultsBySession: Record<string, ReconciliationResultResponse>;
   onInspectReconResult: (resultPublicId: string) => void;
   onInspectPaymentSession: (sessionPublicId: string) => void;
-  onInspectApprovedSession: (sessionPublicId: string) => void;
 }
 
 export const PaymentsTable: React.FC<PaymentsTableProps> = ({
@@ -43,7 +42,6 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
   reconResultsBySession,
   onInspectReconResult,
   onInspectPaymentSession,
-  onInspectApprovedSession
 }) => {
   const formatINR = (val: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -224,36 +222,70 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
                       <td className="monospace">{formatINR(p.amount_inr)}</td>
                       <td className="monospace">{p.utr || '—'}</td>
                       <td>
-                        {reconRes?.status === 'MATCHED' ? (
-                          <span className="status-pill active-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', borderColor: '#34d399', fontWeight: 600 }}>
-                            <Check size={14} /> Matched
-                          </span>
-                        ) : reconRes ? (
-                          <span className="status-pill inactive-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            ⚠ {reconRes.status.replace(/_/g, ' ')}
-                          </span>
-                        ) : (
-                          <span className={`status-pill ${
-                            p.payment_session_status === 'APPROVED' ? 'active-pill' :
-                            p.payment_session_status === 'SUBMITTED' ? 'inactive-pill' : 'archived-pill'
-                          }`}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                          {/* Payment Session Status (Admin / Lifecycle State) */}
+                          <span
+                            className={`status-pill ${
+                              p.payment_session_status === 'APPROVED'
+                                ? 'active-pill'
+                                : p.payment_session_status === 'SUBMITTED'
+                                ? 'status-pill-submitted'
+                                : p.payment_session_status === 'REJECTED'
+                                ? 'archived-pill'
+                                : 'pending-pill'
+                            }`}
+                            style={{ fontSize: '0.72rem', padding: '1px 8px' }}
+                          >
                             {p.payment_session_status}
                           </span>
-                        )}
+
+                          {/* Reconciliation Status (Automated Statement Verification) */}
+                          {reconRes?.status === 'MATCHED' ? (
+                            <span
+                              className="status-pill active-pill"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                background: 'rgba(52, 211, 153, 0.15)',
+                                color: '#34d399',
+                                border: '1px solid rgba(52, 211, 153, 0.4)',
+                                fontWeight: 600,
+                                fontSize: '0.72rem',
+                                padding: '1px 8px',
+                              }}
+                            >
+                              <Check size={12} /> Matched
+                            </span>
+                          ) : reconRes ? (
+                            <span
+                              className="status-pill pending-pill"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                fontSize: '0.72rem',
+                                padding: '1px 8px',
+                              }}
+                            >
+                              ⚠ {reconRes.status.replace(/_/g, ' ')}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', fontStyle: 'italic', paddingLeft: '2px' }}>
+                              Unreconciled
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="text-sm">{new Date(p.created_at).toLocaleDateString()}</td>
                       <td>
                         <button
                           onClick={() => {
                             if (reconRes) {
-                              // Has a local reconciliation result — open the detailed comparison modal
+                              // Has a reconciliation result — open detailed side-by-side comparison modal
                               onInspectReconResult(reconRes.public_id);
-                            } else if (p.payment_session_status === 'APPROVED') {
-                              // APPROVED but reconciliation result not in local map —
-                              // fetch the latest recon result for this session via the by-session endpoint
-                              onInspectApprovedSession(p.payment_session_public_id);
                             } else {
-                              // No reconciliation at all — open the plain payment session drawer
+                              // Not reconciled — open payment session drawer
                               onInspectPaymentSession(p.payment_session_public_id);
                             }
                           }}

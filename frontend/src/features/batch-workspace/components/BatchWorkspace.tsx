@@ -133,7 +133,6 @@ export const BatchWorkspace: React.FC<BatchWorkspaceProps> = ({
           reconResultsBySession={reconHook.reconResultsBySession}
           onInspectReconResult={inspectionHook.openReconciliationDetail}
           onInspectPaymentSession={inspectionHook.openPaymentDetail}
-          onInspectApprovedSession={inspectionHook.openReconciliationDetailBySession}
         />
       )}
 
