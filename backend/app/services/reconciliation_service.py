@@ -81,8 +81,9 @@ class ReconciliationService:
 
         now_utc = datetime.now(timezone.utc)
 
-        # 3. Clean up previous reconciliation runs for this batch (no history retention)
-        await self.reconciliation_repo.delete_runs_by_batch_id(db, batch.id)
+        # 3. Clean up previous reconciliation runs for THIS batch against THIS statement
+        # (This avoids wiping out matched results from different statements, making reconciliation cumulative)
+        await self.reconciliation_repo.delete_runs_by_batch_and_statement(db, batch.id, statement_import.id)
 
         # 4. Create new ReconciliationRun entity in RUNNING state with batch_id
         run = ReconciliationRun(

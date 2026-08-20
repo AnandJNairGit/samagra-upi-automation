@@ -189,4 +189,15 @@ class ReconciliationRepository:
         await session.flush()
         return result.rowcount
 
+    async def delete_runs_by_batch_and_statement(self, session: AsyncSession, batch_id: int, statement_import_id: int) -> int:
+        """Delete reconciliation runs for a specific batch and statement import combination."""
+        from sqlalchemy import delete
+        stmt = delete(ReconciliationRun).where(
+            ReconciliationRun.batch_id == batch_id,
+            ReconciliationRun.statement_import_id == statement_import_id
+        )
+        result = await session.execute(stmt)
+        await session.flush()
+        return result.rowcount
+
 
