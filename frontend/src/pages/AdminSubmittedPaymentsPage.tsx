@@ -1,7 +1,6 @@
 import React from 'react';
 import { AdminNav } from '../components/AdminNav';
 import { PaymentTable } from '../components/PaymentTable';
-import { CheckSquare } from 'lucide-react';
 
 interface AdminSubmittedPaymentsPageProps {
   onNavigate: (path: string) => void;
@@ -17,14 +16,10 @@ export const AdminSubmittedPaymentsPage: React.FC<AdminSubmittedPaymentsPageProp
       <AdminNav activeTab="submitted" onNavigate={onNavigate} />
 
       <header className="page-header">
-        <div>
-          <div className="badge success-badge">
-            <CheckSquare size={14} />
-            Phase 8 — Submitted Verification Queue
-          </div>
+        <div className="page-title-bar">
           <h1 className="page-title">Submitted Payments</h1>
           <p className="page-subtitle">
-            Review participant UTR claims awaiting verification.
+            Review participant UTR transaction claims awaiting verification against statement records.
           </p>
         </div>
       </header>

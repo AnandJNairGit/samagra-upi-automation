@@ -247,17 +247,14 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
           width: '95%',
           maxHeight: '92vh',
           overflowY: 'auto',
-          background: '#0f172a',
-          border: '1px solid rgba(99, 102, 241, 0.3)',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9)',
           padding: '24px 28px',
         }}
       >
         <div className="modal-header" style={{ marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Layers size={20} color="#818cf8" />
-              <h3 id="recon-modal-title" style={{ fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+              <Layers size={20} color="var(--accent)" />
+              <h3 id="recon-modal-title" style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                 Reconciliation Inspection Evidence
               </h3>
             </div>
@@ -269,15 +266,8 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
             onClick={onClose}
             className="icon-btn"
             aria-label="Close modal"
-            style={{
-              padding: '6px',
-              borderRadius: '6px',
-              border: '1px solid var(--border-color)',
-              background: 'rgba(255, 255, 255, 0.05)',
-              cursor: 'pointer',
-            }}
           >
-            <X size={18} color="#94a3b8" />
+            <X size={18} />
           </button>
         </div>
 
@@ -323,7 +313,7 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
                   Reason Code: <span style={{ fontFamily: 'monospace', color: '#e2e8f0', fontWeight: 600 }}>{detail.reason_code}</span>
                 </div>
               </div>
-              <p style={{ fontSize: '0.875rem', color: '#e2e8f0', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-primary)', margin: 0, lineHeight: 1.5 }}>
                 {detail.explanation}
               </p>
             </div>
@@ -331,7 +321,7 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
             {/* 3-State Evaluation Matrix */}
             <div
               style={{
-                background: 'rgba(15, 23, 42, 0.7)',
+                background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '10px',
                 padding: '14px 18px',
@@ -342,19 +332,19 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
                 <div>
-                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Reference Code Match</span>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Reference Code Match</span>
                   {renderEvaluationIndicator(detail.reference_match, 'Not Evaluated')}
                 </div>
                 <div>
-                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Amount Match</span>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Amount Match</span>
                   {renderEvaluationIndicator(detail.amount_match, 'Not Evaluated')}
                 </div>
                 <div>
-                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Bank UTR Match</span>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Bank UTR Match</span>
                   {renderEvaluationIndicator(detail.utr_match, 'Optional / Not Provided')}
                 </div>
                 <div>
-                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Payer Name Match</span>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Payer Name Match</span>
                   {renderEvaluationIndicator(detail.payer_match, 'Not Evaluated')}
                 </div>
               </div>
@@ -366,54 +356,54 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
                 className="summary-section"
                 style={{
                   padding: '16px',
-                  background: 'rgba(17, 24, 39, 0.7)',
-                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  background: '#ffffff',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '10px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-                  <FileSpreadsheet size={16} color="#38bdf8" />
-                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+                  <FileSpreadsheet size={16} color="var(--info)" />
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--info)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
                     Bank Statement Transaction
                   </h4>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Statement File:</span>
-                    <span style={{ fontWeight: 600, color: '#f8fafc', wordBreak: 'break-all', textAlign: 'right' }}>{detail.statement_filename}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Statement File:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-all', textAlign: 'right' }}>{detail.statement_filename}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Bank Reference ID:</span>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#38bdf8' }}>{detail.bank_reference_id || '—'}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Bank Reference ID:</span>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--info)' }}>{detail.bank_reference_id || '—'}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Credit Amount:</span>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#34d399', fontSize: '0.95rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Credit Amount:</span>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--success)', fontSize: '0.95rem' }}>
                       {formatINR(detail.bank_amount_inr)}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Direction:</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Direction:</span>
                     <span className={`status-pill ${detail.bank_direction === 'CREDIT' ? 'active-pill' : 'inactive-pill'}`} style={{ padding: '2px 8px', fontSize: '0.72rem' }}>
                       {detail.bank_direction || 'CREDIT'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Bank UTR:</span>
-                    <span style={{ fontFamily: 'monospace', color: '#e2e8f0' }}>{detail.bank_utr || '—'}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Bank UTR:</span>
+                    <span style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>{detail.bank_utr || '—'}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Payer Name:</span>
-                    <span style={{ color: '#e2e8f0' }}>{detail.bank_counterparty_name || '—'}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Payer Name:</span>
+                    <span style={{ color: 'var(--text-primary)' }}>{detail.bank_counterparty_name || '—'}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Transaction Date:</span>
-                    <span style={{ color: '#94a3b8' }}>{detail.bank_transaction_at ? new Date(detail.bank_transaction_at).toLocaleString() : '—'}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Transaction Date:</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{detail.bank_transaction_at ? new Date(detail.bank_transaction_at).toLocaleString() : '—'}</span>
                   </div>
                   {detail.bank_description && (
-                    <div style={{ marginTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px' }}>
-                      <span style={{ display: 'block', fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase' }}>Description / Remarks:</span>
-                      <span style={{ fontSize: '0.8rem', color: '#cbd5e1', wordBreak: 'break-word', fontFamily: 'monospace' }}>
+                    <div style={{ marginTop: '4px', borderTop: '1px solid var(--border-color)', paddingTop: '6px' }}>
+                      <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Description / Remarks:</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', wordBreak: 'break-word', fontFamily: 'monospace' }}>
                         {detail.bank_description}
                       </span>
                     </div>
@@ -425,59 +415,59 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
                 className="summary-section"
                 style={{
                   padding: '16px',
-                  background: 'rgba(17, 24, 39, 0.7)',
-                  border: '1px solid rgba(129, 140, 248, 0.25)',
+                  background: '#ffffff',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '10px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-                  <CreditCard size={16} color="#818cf8" />
-                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+                  <CreditCard size={16} color="var(--accent)" />
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
                     Application Payment Session
                   </h4>
                 </div>
                 {detail.expected_reference_id || detail.participant_name ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>Participant:</span>
-                      <span style={{ fontWeight: 600, color: '#f8fafc' }}>{detail.participant_name || '—'}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>Participant:</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{detail.participant_name || '—'}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>Course:</span>
-                      <span style={{ color: '#e2e8f0', textAlign: 'right' }}>{detail.course_name_snapshot || '—'}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>Course:</span>
+                      <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>{detail.course_name_snapshot || '—'}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>Batch:</span>
-                      <span style={{ color: '#e2e8f0', textAlign: 'right' }}>{detail.batch_name_snapshot || '—'}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>Batch:</span>
+                      <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>{detail.batch_name_snapshot || '—'}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>Expected Ref ID:</span>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#38bdf8' }}>{detail.expected_reference_id || '—'}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>Expected Ref ID:</span>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--info)' }}>{detail.expected_reference_id || '—'}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>Expected Amount:</span>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Expected Amount:</span>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                         {formatINR(detail.expected_amount_inr)}
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>Payment Status:</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>Payment Status:</span>
                       <span className={`status-pill ${detail.payment_session_status === 'APPROVED' ? 'active-pill' : 'inactive-pill'}`} style={{ padding: '2px 8px', fontSize: '0.72rem' }}>
                         {detail.payment_session_status || '—'}
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>Submitted UTR:</span>
-                      <span style={{ fontFamily: 'monospace', color: '#e2e8f0' }}>{detail.submitted_utr || 'Not Provided (Optional)'}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>Submitted UTR:</span>
+                      <span style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>{detail.submitted_utr || 'Not Provided (Optional)'}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>Submission Status:</span>
-                      <span style={{ color: '#e2e8f0' }}>{detail.submission_status || '—'}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>Submission Status:</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{detail.submission_status || '—'}</span>
                     </div>
                   </div>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#64748b' }}>
-                    <AlertCircle size={28} color="#64748b" style={{ margin: '0 auto 8px' }} />
+                  <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)' }}>
+                    <AlertCircle size={28} color="var(--text-muted)" style={{ margin: '0 auto 8px' }} />
                     <p style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>
                       No matching PaymentSession record found for this batch.
                     </p>
@@ -489,7 +479,7 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
             {/* Exact Original Imported Row Table */}
             <div
               style={{
-                background: 'rgba(15, 23, 42, 0.8)',
+                background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '10px',
                 padding: '16px',
@@ -497,8 +487,8 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <div>
-                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <FileSpreadsheet size={16} color="#34d399" /> Original Spreadsheet Row (`raw_row_data`)
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <FileSpreadsheet size={16} color="var(--success)" /> Original Spreadsheet Row (`raw_row_data`)
                   </h4>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                     Exact column headers and cell values as imported from the original spreadsheet.
@@ -511,22 +501,22 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
                   <table className="admin-table" style={{ margin: 0, fontSize: '0.825rem' }}>
                     <thead>
                       <tr>
-                        <th style={{ width: '35%', background: 'rgba(0,0,0,0.3)', color: '#94a3b8' }}>Column Header</th>
-                        <th style={{ width: '65%', background: 'rgba(0,0,0,0.3)', color: '#94a3b8' }}>Original Excel/CSV Value</th>
+                        <th style={{ width: '35%', background: '#f5f2eb', color: 'var(--text-secondary)' }}>Column Header</th>
+                        <th style={{ width: '65%', background: '#f5f2eb', color: 'var(--text-secondary)' }}>Original Excel/CSV Value</th>
                       </tr>
                     </thead>
                     <tbody>
                       {Object.entries(detail.raw_row_data).map(([key, value], idx) => (
                         <tr key={idx}>
-                          <td style={{ fontWeight: 600, color: '#a5b4fc', fontFamily: 'monospace', wordBreak: 'break-word' }}>{key}</td>
-                          <td style={{ color: '#f8fafc', wordBreak: 'break-word', fontFamily: 'monospace' }}>{formatCellValue(value)}</td>
+                          <td style={{ fontWeight: 600, color: 'var(--accent)', fontFamily: 'monospace', wordBreak: 'break-word' }}>{key}</td>
+                          <td style={{ color: 'var(--text-primary)', wordBreak: 'break-word', fontFamily: 'monospace' }}>{formatCellValue(value)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <div style={{ padding: '16px', background: 'rgba(245, 158, 11, 0.08)', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.2)', textAlign: 'center', fontSize: '0.825rem', color: '#fbbf24' }}>
+                <div style={{ padding: '16px', background: 'rgba(245, 158, 11, 0.08)', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.2)', textAlign: 'center', fontSize: '0.825rem', color: 'var(--warning)' }}>
                   ⚠ Original raw row is unavailable for this historical transaction. Normalized transaction data is displayed above.
                 </div>
               )}
@@ -535,32 +525,32 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
             {/* Payment Submission Information */}
             <div
               style={{
-                background: 'rgba(15, 23, 42, 0.6)',
+                background: '#ffffff',
                 border: '1px solid var(--border-color)',
                 borderRadius: '10px',
                 padding: '14px 18px',
               }}
             >
               <h4 style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Send size={14} color="#818cf8" /> Participant Submission Claim
+                <Send size={14} color="var(--accent)" /> Participant Submission Claim
               </h4>
               {detail.submitted_utr || detail.submission_status ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', fontSize: '0.85rem' }}>
                   <div>
-                    <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8' }}>Submitted UTR</span>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#38bdf8' }}>{detail.submitted_utr || '—'}</span>
+                    <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Submitted UTR</span>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--info)' }}>{detail.submitted_utr || '—'}</span>
                   </div>
                   <div>
-                    <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8' }}>Submission Status</span>
-                    <span style={{ color: '#e2e8f0' }}>{detail.submission_status || '—'}</span>
+                    <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Submission Status</span>
+                    <span style={{ color: 'var(--text-primary)' }}>{detail.submission_status || '—'}</span>
                   </div>
                   <div>
-                    <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8' }}>Submitted At</span>
-                    <span style={{ color: '#94a3b8' }}>{detail.submitted_at ? new Date(detail.submitted_at).toLocaleString() : '—'}</span>
+                    <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Submitted At</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{detail.submitted_at ? new Date(detail.submitted_at).toLocaleString() : '—'}</span>
                   </div>
                 </div>
               ) : (
-                <p style={{ fontSize: '0.825rem', color: '#64748b', margin: 0, fontStyle: 'italic' }}>
+                <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', margin: 0, fontStyle: 'italic' }}>
                   No participant UTR submission was recorded for this session (UTR submission is optional).
                 </p>
               )}
@@ -569,23 +559,24 @@ export const ReconciliationInspectionModal: React.FC<ReconciliationInspectionMod
             {/* Technical JSON Details */}
             <details
               style={{
-                background: 'rgba(0, 0, 0, 0.4)',
+                background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '8px',
                 padding: '10px 14px',
                 fontSize: '0.8rem',
               }}
             >
-              <summary style={{ cursor: 'pointer', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Code size={14} /> ⚙ Technical System Information (Raw JSON)
               </summary>
               <pre
                 style={{
                   marginTop: '10px',
                   padding: '12px',
-                  background: 'rgba(0, 0, 0, 0.6)',
+                  background: '#ffffff',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '6px',
-                  color: '#38bdf8',
+                  color: 'var(--text-primary)',
                   fontSize: '0.75rem',
                   overflowX: 'auto',
                   fontFamily: 'monospace',

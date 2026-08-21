@@ -29,7 +29,7 @@ export const BatchWorkspaceHeader: React.FC<BatchWorkspaceHeaderProps> = ({
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
-        <button onClick={() => onNavigate('/upi/admin/batches')} className="btn-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#818cf8', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+        <button onClick={() => onNavigate('/upi/admin/batches')} className="btn-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--accent-light)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
           <ArrowLeft size={14} /> Batches
         </button>
         <span>/</span>
@@ -37,7 +37,7 @@ export const BatchWorkspaceHeader: React.FC<BatchWorkspaceHeaderProps> = ({
       </div>
 
       <div className="workspace-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
+        <div className="page-title-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <h1 className="page-title" style={{ margin: 0 }}>{batch.name}</h1>
             <span className={`status-pill ${batch.status === 'ACTIVE' ? 'active-pill' : batch.status === 'INACTIVE' ? 'inactive-pill' : 'archived-pill'}`}>
@@ -45,7 +45,7 @@ export const BatchWorkspaceHeader: React.FC<BatchWorkspaceHeaderProps> = ({
             </span>
           </div>
           <p className="page-subtitle" style={{ marginTop: '4px' }}>
-            {batch.course_name} — Fee: <strong style={{ color: '#38bdf8' }}>{formatINR(batch.amount_inr)}</strong>
+            {batch.course_name} — Fee: <strong style={{ color: 'var(--success)' }}>{formatINR(batch.amount_inr)}</strong>
           </p>
         </div>
 

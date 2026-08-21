@@ -147,8 +147,8 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
                       padding: '10px 12px',
                       borderRadius: '6px',
                       border: '1px solid var(--border-color)',
-                      background: selectedImportId === imp.public_id ? 'rgba(129, 140, 248, 0.15)' : 'transparent',
-                      borderColor: selectedImportId === imp.public_id ? '#818cf8' : 'var(--border-color)',
+                      background: selectedImportId === imp.public_id ? 'var(--accent-bg)' : 'transparent',
+                      borderColor: selectedImportId === imp.public_id ? 'var(--accent)' : 'var(--border-color)',
                       cursor: 'pointer',
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -156,7 +156,7 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#f8fafc' }}>{imp.filename}</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{imp.filename}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                         {imp.valid_rows} rows • {imp.file_type.toUpperCase()}
                       </div>
@@ -216,7 +216,7 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
                       {importTxns.map((t) => (
                         <tr key={t.public_id}>
                           <td><span className={`status-pill ${t.direction === 'CREDIT' ? 'active-pill' : 'inactive-pill'}`}>{t.direction}</span></td>
-                          <td className="monospace font-semibold" style={{ color: '#38bdf8' }}>{t.reference_id || '—'}</td>
+                          <td className="monospace font-semibold" style={{ color: 'var(--info)' }}>{t.reference_id || '—'}</td>
                           <td className="monospace">{t.amount_inr ? formatINR(t.amount_inr) : '—'}</td>
                           <td className="monospace">{t.utr || '—'}</td>
                           <td>{t.counterparty_name || '—'}</td>
@@ -229,7 +229,7 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
             </div>
           ) : (
             <div className="card empty-card">
-              <FileSpreadsheet size={36} color="#6b7280" />
+              <FileSpreadsheet size={36} color="var(--text-muted)" />
               <p>Select a statement file on the left or click "+ Import Statement File" to upload a new statement file.</p>
             </div>
           )}
@@ -251,21 +251,21 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
             </div>
 
             {/* Progress Steps */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 600, color: '#64748b', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', marginBottom: '20px', border: '1px solid var(--border-color)' }}>
-              <span style={{ color: step >= 1 ? '#818cf8' : undefined }}>1. Select File</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: '8px', marginBottom: '20px', border: '1px solid var(--border-color)' }}>
+              <span style={{ color: step >= 1 ? 'var(--accent)' : undefined }}>1. Select File</span>
               <span>→</span>
-              <span style={{ color: step >= 2 ? '#818cf8' : undefined }}>2. Select Sheet</span>
+              <span style={{ color: step >= 2 ? 'var(--accent)' : undefined }}>2. Select Sheet</span>
               <span>→</span>
-              <span style={{ color: step >= 3 ? '#818cf8' : undefined }}>3. Match Columns</span>
+              <span style={{ color: step >= 3 ? 'var(--accent)' : undefined }}>3. Match Columns</span>
               <span>→</span>
-              <span style={{ color: step >= 4 ? '#818cf8' : undefined }}>4. Preview</span>
+              <span style={{ color: step >= 4 ? 'var(--accent)' : undefined }}>4. Preview</span>
               <span>→</span>
-              <span style={{ color: step >= 5 ? '#818cf8' : undefined }}>5. Finish</span>
+              <span style={{ color: step >= 5 ? 'var(--accent)' : undefined }}>5. Finish</span>
             </div>
 
             {wizardError && (
               <div className="error-banner" style={{ marginBottom: '16px' }}>
-                <AlertTriangle size={16} color="#ef4444" />
+                <AlertTriangle size={16} color="var(--danger)" />
                 <span>{wizardError}</span>
               </div>
             )}
@@ -325,10 +325,10 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
             {/* Step 2: Excel Sheet Selection */}
             {step === 2 && previewData && (
               <div>
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f8fafc', marginBottom: '8px' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
                   Select Sheet from Excel Workbook
                 </h4>
-                <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '16px' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
                   Your Excel file contains multiple tabs/sheets. Click on the sheet that has your transaction entries:
                 </p>
 
@@ -362,17 +362,17 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
             {step === 3 && previewData && (
               <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
                 <div style={{ marginBottom: '16px' }}>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f8fafc' }}>Match Statement Columns</h4>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Match Statement Columns</h4>
                   <span className="field-hint">
                     Select which column in your uploaded file corresponds to each field below:
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(0,0,0,0.3)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: 'var(--bg-secondary)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                   {/* Reference Code (Required) */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <label className="form-label">
-                      Payment Reference Code / Remarks <span style={{ color: '#ef4444' }}>*</span>
+                      Payment Reference Code / Remarks <span style={{ color: 'var(--danger)' }}>*</span>
                     </label>
                     <select
                       value={refColIdx}
@@ -393,7 +393,7 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
                   {/* Amount (Required) */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <label className="form-label">
-                      Amount (₹ Rupees) <span style={{ color: '#ef4444' }}>*</span>
+                      Amount (₹ Rupees) <span style={{ color: 'var(--danger)' }}>*</span>
                     </label>
                     <select
                       value={amtColIdx}
@@ -513,7 +513,7 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                   <div>
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f8fafc' }}>Preview Mapped Data</h4>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Preview Mapped Data</h4>
                     <span className="field-hint">Showing sample entries from file (Total entries: {previewData.total_detected_rows})</span>
                   </div>
                 </div>
@@ -532,19 +532,19 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
                     <tbody>
                       {previewData.preview_rows.map((row: any, idx: number) => (
                         <tr key={idx}>
-                          <td style={{ fontWeight: 600, color: '#a5b4fc', fontFamily: 'monospace' }}>
+                          <td style={{ fontWeight: 600, color: 'var(--accent)', fontFamily: 'monospace' }}>
                             {refColIdx !== '' ? String(row[refColIdx] ?? '-') : '-'}
                           </td>
                           <td className="amount-highlight font-semibold" style={{ fontFamily: 'monospace' }}>
                             {amtColIdx !== '' ? String(row[amtColIdx] ?? '-') : '-'}
                           </td>
-                          <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                          <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                             {dateColIdx !== '' ? String(row[dateColIdx] ?? '-') : '-'}
                           </td>
-                          <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                          <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                             {dirColIdx !== '' ? String(row[dirColIdx] ?? '-') : '-'}
                           </td>
-                          <td style={{ fontSize: '0.8rem', color: '#38bdf8', fontFamily: 'monospace' }}>
+                          <td style={{ fontSize: '0.8rem', color: 'var(--info)', fontFamily: 'monospace' }}>
                             {utrColIdx !== '' ? String(row[utrColIdx] ?? '-') : '-'}
                           </td>
                         </tr>
@@ -559,7 +559,6 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
                     disabled={confirmLoading}
                     onClick={handleConfirmImport}
                     className="btn btn-primary"
-                    style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderColor: '#10b981' }}
                   >
                     {confirmLoading ? (
                       <>
@@ -581,38 +580,38 @@ export const StatementImportsPanel: React.FC<StatementImportsPanelProps> = ({
             {step === 5 && importSummary && (
               <div style={{ textAlign: 'center', padding: '16px 0' }}>
                 <div className="icon-badge-success" style={{ margin: '0 auto 16px' }}>
-                  <CheckCircle2 size={32} color="#10b981" />
+                  <CheckCircle2 size={32} color="var(--success)" />
                 </div>
 
-                <h4 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#34d399', marginBottom: '6px' }}>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--success)', marginBottom: '6px' }}>
                   {importSummary.already_imported ? 'File Already Imported' : 'Statement Import Successful!'}
                 </h4>
-                <p style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '24px' }}>{importSummary.message}</p>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>{importSummary.message}</p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '12px', marginBottom: '24px' }}>
-                  <div className="summary-section" style={{ padding: '12px' }}>
-                    <span style={{ display: 'block', fontSize: '1.4rem', fontWeight: 700, color: '#f8fafc' }}>
+                  <div className="summary-section" style={{ padding: '12px', background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                    <span style={{ display: 'block', fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       {importSummary.total_rows}
                     </span>
                     <span className="detail-label">Total Entries</span>
                   </div>
 
-                  <div className="summary-section" style={{ padding: '12px', background: 'rgba(16,185,129,0.1)' }}>
-                    <span style={{ display: 'block', fontSize: '1.4rem', fontWeight: 700, color: '#34d399' }}>
+                  <div className="summary-section" style={{ padding: '12px', background: 'var(--success-bg)', border: '1px solid var(--success-border)', borderRadius: '8px' }}>
+                    <span style={{ display: 'block', fontSize: '1.4rem', fontWeight: 700, color: 'var(--success)' }}>
                       +{importSummary.new_transactions}
                     </span>
-                    <span className="detail-label" style={{ color: '#34d399' }}>New Transactions</span>
+                    <span className="detail-label" style={{ color: 'var(--success)' }}>New Transactions</span>
                   </div>
 
-                  <div className="summary-section" style={{ padding: '12px', background: 'rgba(245,158,11,0.1)' }}>
-                    <span style={{ display: 'block', fontSize: '1.4rem', fontWeight: 700, color: '#fbbf24' }}>
+                  <div className="summary-section" style={{ padding: '12px', background: 'var(--warning-bg)', border: '1px solid var(--warning-border)', borderRadius: '8px' }}>
+                    <span style={{ display: 'block', fontSize: '1.4rem', fontWeight: 700, color: 'var(--warning)' }}>
                       {importSummary.duplicate_rows}
                     </span>
-                    <span className="detail-label" style={{ color: '#fbbf24' }}>Skipped (Dupes)</span>
+                    <span className="detail-label" style={{ color: 'var(--warning)' }}>Skipped (Dupes)</span>
                   </div>
 
-                  <div className="summary-section" style={{ padding: '12px' }}>
-                    <span style={{ display: 'block', fontSize: '1.4rem', fontWeight: 700, color: '#94a3b8' }}>
+                  <div className="summary-section" style={{ padding: '12px', background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                    <span style={{ display: 'block', fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                       {importSummary.rows_without_reference}
                     </span>
                     <span className="detail-label">Missing Ref Code</span>

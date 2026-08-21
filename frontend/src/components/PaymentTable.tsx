@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Clock,
   Eye,
-  Filter,
   Loader2,
   RefreshCw,
   Search,
@@ -106,7 +105,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1); // Reset to page 1 on new search
+    setPage(1);
     setAppliedSearch(searchInput.trim());
   };
 
@@ -114,7 +113,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
     setter: React.Dispatch<React.SetStateAction<string>>,
     value: string
   ) => {
-    setPage(1); // Reset page to 1 on any filter change
+    setPage(1);
     setter(value);
   };
 
@@ -139,36 +138,36 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
     switch (st.toUpperCase()) {
       case 'PENDING':
         return (
-          <span className="status-pill active-pill" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
-            <Clock size={12} /> Awaiting Payment
+          <span className="status-badge status-badge-pending">
+            <Clock size={11} /> Awaiting Payment
           </span>
         );
       case 'SUBMITTED':
         return (
-          <span className="status-pill status-pill-submitted" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
-            <CheckCircle2 size={12} /> Submitted
+          <span className="status-badge status-badge-submitted">
+            <CheckCircle2 size={11} /> Submitted
           </span>
         );
       case 'APPROVED':
         return (
-          <span className="status-pill" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.4)', fontSize: '0.75rem', padding: '3px 8px' }}>
-            <CheckCircle2 size={12} /> Approved
+          <span className="status-badge status-badge-approved">
+            <CheckCircle2 size={11} /> Approved
           </span>
         );
       case 'REJECTED':
         return (
-          <span className="status-pill" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)', fontSize: '0.75rem', padding: '3px 8px' }}>
-            <XCircle size={12} /> Rejected
+          <span className="status-badge status-badge-rejected">
+            <XCircle size={11} /> Rejected
           </span>
         );
       case 'EXPIRED':
         return (
-          <span className="status-pill archived-pill" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
-            <Clock size={12} /> Expired
+          <span className="status-badge status-badge-expired">
+            <Clock size={11} /> Expired
           </span>
         );
       default:
-        return <span className="status-pill">{st}</span>;
+        return <span className="status-badge">{st}</span>;
     }
   };
 
@@ -185,7 +184,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
         <form onSubmit={handleSearchSubmit} className="filter-form-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: '12px', alignItems: 'center' }}>
           {/* Search Input */}
           <div className="search-input-wrapper" style={{ position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="text"
               className="form-input"
@@ -199,7 +198,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
           {/* Status Select */}
           {!fixedStatus ? (
             <select
-              className="form-input filter-select"
+              className="filter-select"
               value={statusFilter}
               onChange={(e) => handleFilterChange(setStatusFilter, e.target.value)}
             >
@@ -211,14 +210,14 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
               <option value="EXPIRED">EXPIRED</option>
             </select>
           ) : (
-            <div className="form-input filter-select disabled-input" style={{ opacity: 0.8, cursor: 'not-allowed', display: 'flex', alignItems: 'center' }}>
+            <div className="filter-select" style={{ opacity: 0.8, cursor: 'not-allowed', display: 'flex', alignItems: 'center' }}>
               <span>Status: {fixedStatus}</span>
             </div>
           )}
 
           {/* Course Select */}
           <select
-            className="form-input filter-select"
+            className="filter-select"
             value={courseFilter}
             onChange={(e) => handleFilterChange(setCourseFilter, e.target.value)}
           >
@@ -232,46 +231,45 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
 
           {/* Batch Select */}
           <select
-            className="form-input filter-select"
+            className="filter-select"
             value={batchFilter}
             onChange={(e) => handleFilterChange(setBatchFilter, e.target.value)}
           >
             <option value="">All Batches</option>
-            {batches.map((b) => (
-              <option key={b.public_id} value={b.public_id}>
-                {b.name}
-              </option>
-            ))}
+            {batches
+              .filter((b) => !courseFilter || b.course_public_id === courseFilter)
+              .map((b) => (
+                <option key={b.public_id} value={b.public_id}>
+                  {b.name}
+                </option>
+              ))}
           </select>
 
-          {/* Filter Actions */}
+          {/* Actions */}
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button type="submit" className="btn btn-primary" style={{ padding: '8px 14px' }}>
-              <Filter size={14} />
-              <span>Search</span>
+            <button type="submit" className="btn btn-primary btn-sm">
+              Search
             </button>
             {hasActiveFilters && (
               <button
                 type="button"
                 onClick={clearFilters}
-                className="btn btn-outline"
-                style={{ padding: '8px 12px' }}
-                title="Clear all active filters"
+                className="btn btn-outline btn-sm"
               >
-                <span>Reset</span>
+                Reset
               </button>
             )}
           </div>
         </form>
       </div>
 
-      {/* Main Table Card */}
-      <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+      {/* Main Payment Sessions Card */}
+      <div className="card" style={{ padding: 0 }}>
         {/* Card Header & Controls */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h2 style={{ fontSize: '1.05rem', fontWeight: 600 }}>Payment Sessions ({total})</h2>
-            {loading && <Loader2 size={16} className="spinner" color="#818cf8" />}
+            <h2 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>Payment Sessions ({total})</h2>
+            {loading && <Loader2 size={15} className="spinner" color="var(--accent-light)" />}
           </div>
           <button
             onClick={loadData}
@@ -286,20 +284,19 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
         {/* Loading / Error / Empty / Table render */}
         {error ? (
           <div className="error-banner" style={{ margin: '20px' }}>
-            <AlertCircle size={16} color="#ef4444" />
+            <AlertCircle size={16} />
             <span>{error}</span>
           </div>
         ) : loading && items.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-            <Loader2 size={32} className="spinner" color="#818cf8" />
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              Loading payment records...
-            </p>
+          <div style={{ padding: '8px' }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="skeleton skeleton-table-row" />
+            ))}
           </div>
         ) : items.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-            <p style={{ color: '#e2e8f0', fontSize: '1rem', fontWeight: 600 }}>No payments found.</p>
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+          <div style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
+            <p style={{ color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 600 }}>No payments found.</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
               {hasActiveFilters ? 'Try adjusting or resetting your active search filters.' : 'No payment sessions exist in the system yet.'}
             </p>
             {hasActiveFilters && (
@@ -328,13 +325,13 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                   <tr key={item.payment_session_public_id}>
                     <td>
                       <div className="course-name-cell">
-                        <span className="font-semibold" style={{ color: '#f8fafc' }}>{item.participant_name}</span>
+                        <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{item.participant_name}</span>
                         <span className="course-desc-preview">{item.phone} • {item.email}</span>
                       </div>
                     </td>
                     <td>
                       <div className="course-name-cell">
-                        <span style={{ color: '#e2e8f0' }}>{item.course_name}</span>
+                        <span style={{ color: 'var(--text-primary)' }}>{item.course_name}</span>
                         <span className="course-tag">{item.batch_name}</span>
                       </div>
                     </td>
@@ -342,20 +339,20 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                       <span className="amount-highlight font-semibold">{formatINR(item.amount_inr)}</span>
                     </td>
                     <td>
-                      <span className="monospace font-bold" style={{ fontSize: '0.85rem' }}>{item.reference_id}</span>
+                      <span className="monospace font-bold" style={{ fontSize: '0.85rem', color: 'var(--info)' }}>{item.reference_id}</span>
                     </td>
                     <td>
                       {item.utr ? (
-                        <span className="monospace" style={{ color: '#38bdf8', fontWeight: 600, fontSize: '0.85rem' }}>
+                        <span className="monospace" style={{ color: 'var(--accent-light)', fontWeight: 600, fontSize: '0.85rem' }}>
                           {item.utr}
                         </span>
                       ) : (
-                        <span style={{ color: '#64748b', fontSize: '0.8rem' }}>—</span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>—</span>
                       )}
                     </td>
                     <td>{renderStatusBadge(item.payment_session_status)}</td>
                     <td>
-                      <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                         {new Date(item.created_at).toLocaleString('en-IN', {
                           dateStyle: 'short',
                           timeStyle: 'short',
@@ -381,9 +378,9 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
 
         {/* Pagination Bar */}
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', borderTop: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.15)' }}>
-            <span style={{ fontSize: '0.8125rem', color: '#94a3b8' }}>
-              Showing Page <strong style={{ color: '#e2e8f0' }}>{page}</strong> of <strong style={{ color: '#e2e8f0' }}>{totalPages}</strong> ({total} total items)
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', borderTop: '1px solid var(--border-color)', background: 'var(--bg-surface)' }}>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+              Showing Page <strong style={{ color: 'var(--text-primary)' }}>{page}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{totalPages}</strong> ({total} total items)
             </span>
             <div style={{ display: 'flex', gap: '6px' }}>
               <button

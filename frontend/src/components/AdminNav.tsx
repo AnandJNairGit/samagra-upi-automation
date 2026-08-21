@@ -46,7 +46,7 @@ export const AdminNav: React.FC<AdminNavProps> = ({ activeTab, onNavigate }) => 
           onClick={() => navigateTo('/upi/admin')}
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          <ShieldCheck size={20} color="#818cf8" />
+          <ShieldCheck size={20} color="var(--accent-light)" />
           <span className="brand-text">Admin Console</span>
         </div>
 

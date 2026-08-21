@@ -50,7 +50,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onNavigate }) =>
       <div className="login-card">
         <div className="login-header">
           <div className="login-icon">
-            <KeyRound size={28} color="#818cf8" />
+            <KeyRound size={28} color="var(--accent-light)" />
           </div>
           <h2 className="login-title">Administrator Sign In</h2>
           <p className="login-subtitle">
@@ -60,7 +60,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onNavigate }) =>
 
         {error && (
           <div className="error-banner" role="alert">
-            <AlertCircle size={18} color="#ef4444" style={{ flexShrink: 0 }} />
+            <AlertCircle size={18} color="var(--danger)" style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
         )}

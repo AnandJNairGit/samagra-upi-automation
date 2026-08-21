@@ -120,7 +120,6 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
 
   const handleInputChange = (field: keyof ParticipantFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear field-specific error as user types
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
@@ -173,11 +172,11 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
     return (
       <div className="public-container">
         <div className="public-card loading-card">
-          <Loader2 size={36} className="spinner" color="#818cf8" />
-          <h2 style={{ marginTop: '1rem', color: '#f8fafc', fontSize: '1.25rem' }}>
+          <Loader2 size={36} className="spinner" color="var(--accent-light)" />
+          <h2 style={{ marginTop: '1rem', color: 'var(--text-primary)', fontSize: '1.25rem' }}>
             Loading Registration Details
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
             Resolving program details and cohort schedule...
           </p>
         </div>
@@ -191,14 +190,14 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
       <div className="public-container">
         <div className="public-card unavailable-card">
           <div className="icon-badge-danger">
-            <AlertCircle size={32} color="#ef4444" />
+            <AlertCircle size={32} color="var(--danger)" />
           </div>
           <h1 className="unavailable-title">Registration Unavailable</h1>
           <p className="unavailable-subtitle">
             {unavailableError || 'This registration link is no longer active.'}
           </p>
           <div className="unavailable-box">
-            <HelpCircle size={18} color="#94a3b8" />
+            <HelpCircle size={18} color="var(--text-muted)" />
             <span>
               If you believe this is an error, please contact the training coordinator or program
               administrator for an updated link.
@@ -213,14 +212,32 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
   return (
     <div className="public-container">
       <div className="public-card">
+        {/* Step Indicator */}
+        <div className="payment-steps">
+          <div className="payment-step">
+            <span className="step-number active">1</span>
+            <span className="step-label">Enroll</span>
+          </div>
+          <div className="payment-step-line" />
+          <div className="payment-step">
+            <span className="step-number">2</span>
+            <span className="step-label">UPI Pay</span>
+          </div>
+          <div className="payment-step-line" />
+          <div className="payment-step">
+            <span className="step-number">3</span>
+            <span className="step-label">Confirm</span>
+          </div>
+        </div>
+
         {/* Header & Institute Branding */}
         <header className="public-header">
           <div className="institute-brand">
             <div className="brand-icon">
-              <GraduationCap size={22} color="#818cf8" />
+              <GraduationCap size={22} color="var(--accent-light)" />
             </div>
             <div>
-              <span className="brand-name">Samagra Institute</span>
+              <span className="brand-name">Samagra Learning</span>
               <span className="brand-tagline">Program Enrollment Portal</span>
             </div>
           </div>
@@ -229,7 +246,7 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
         {/* Read-Only Course & Batch Context */}
         <div className="program-hero-card">
           <div className="program-meta-badge">
-            <ShieldCheck size={13} />
+            <ShieldCheck size={12} />
             <span>Verified Cohort Link</span>
           </div>
 
@@ -263,8 +280,10 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
 
         {/* Participant Registration Form */}
         <div className="registration-form-section">
-          <h2 className="form-section-title">Participant Information</h2>
-          <p className="form-section-subtitle">
+          <h2 className="form-section-title" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+            Participant Information
+          </h2>
+          <p className="form-section-subtitle" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '18px' }}>
             Please enter your contact details. Confirmations will be sent via Email & SMS.
           </p>
 
@@ -279,10 +298,10 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
             {/* Full Name */}
             <div className="form-group">
               <label htmlFor="reg-fullname" className="form-label">
-                Full Name <span style={{ color: '#ef4444' }}>*</span>
+                Full Name <span style={{ color: 'var(--danger)' }}>*</span>
               </label>
-              <div className="input-with-icon">
-                <User size={16} className="input-icon" />
+              <div className="input-group">
+                <User size={15} className="input-icon" />
                 <input
                   id="reg-fullname"
                   type="text"
@@ -290,7 +309,7 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
                   value={formData.fullName}
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
                   onBlur={() => handleBlur('fullName')}
-                  className={`form-input public-input ${errors.fullName ? 'input-error' : ''}`}
+                  className={`form-input ${errors.fullName ? 'input-error' : ''}`}
                   disabled={submitting}
                   autoComplete="name"
                 />
@@ -301,10 +320,26 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
             {/* Mobile Number */}
             <div className="form-group">
               <label htmlFor="reg-phone" className="form-label">
-                Mobile Number (India) <span style={{ color: '#ef4444' }}>*</span>
+                Mobile Number (India) <span style={{ color: 'var(--danger)' }}>*</span>
               </label>
-              <div className="input-with-prefix">
-                <span className="input-prefix">+91</span>
+              <div style={{ display: 'flex' }}>
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-color)',
+                    borderRight: 'none',
+                    borderRadius: 'var(--radius-md) 0 0 var(--radius-md)',
+                    padding: '0 12px',
+                    color: 'var(--text-muted)',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  +91
+                </span>
                 <input
                   id="reg-phone"
                   type="tel"
@@ -316,7 +351,8 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
                     handleInputChange('phone', onlyNums);
                   }}
                   onBlur={() => handleBlur('phone')}
-                  className={`form-input public-input ${errors.phone ? 'input-error' : ''}`}
+                  className={`form-input ${errors.phone ? 'input-error' : ''}`}
+                  style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
                   disabled={submitting}
                   autoComplete="tel"
                 />
@@ -327,10 +363,10 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
             {/* Email Address */}
             <div className="form-group">
               <label htmlFor="reg-email" className="form-label">
-                Email Address <span style={{ color: '#ef4444' }}>*</span>
+                Email Address <span style={{ color: 'var(--danger)' }}>*</span>
               </label>
-              <div className="input-with-icon">
-                <Mail size={16} className="input-icon" />
+              <div className="input-group">
+                <Mail size={15} className="input-icon" />
                 <input
                   id="reg-email"
                   type="email"
@@ -338,7 +374,7 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   onBlur={() => handleBlur('email')}
-                  className={`form-input public-input ${errors.email ? 'input-error' : ''}`}
+                  className={`form-input ${errors.email ? 'input-error' : ''}`}
                   disabled={submitting}
                   autoComplete="email"
                 />
@@ -359,14 +395,14 @@ export const PublicRegistrationPage: React.FC<PublicRegistrationPageProps> = ({
                 </>
               ) : (
                 <>
-                  <span>Continue to Pay</span>
+                  <span>Continue to UPI Payment</span>
                   <ChevronRight size={18} />
                 </>
               )}
             </button>
 
             <div className="security-footer">
-              <Lock size={13} />
+              <Lock size={12} />
               <span>Safe & Secure UPI Payment Gateway Authorization</span>
             </div>
           </form>

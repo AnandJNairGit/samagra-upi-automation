@@ -11,7 +11,6 @@ import {
   CreditCard,
   History,
   Info,
-  Loader2,
   ShieldCheck,
   User,
   XCircle,
@@ -75,36 +74,36 @@ export const AdminPaymentDetailPage: React.FC<AdminPaymentDetailPageProps> = ({
     switch (st.toUpperCase()) {
       case 'PENDING':
         return (
-          <span className="status-pill active-pill">
-            <Clock size={12} /> Awaiting Payment
+          <span className="status-badge status-badge-pending">
+            <Clock size={11} /> Awaiting Payment
           </span>
         );
       case 'SUBMITTED':
         return (
-          <span className="status-pill status-pill-submitted">
-            <CheckCircle2 size={12} /> Submitted
+          <span className="status-badge status-badge-submitted">
+            <CheckCircle2 size={11} /> Submitted
           </span>
         );
       case 'APPROVED':
         return (
-          <span className="status-pill" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.4)' }}>
-            <CheckCircle2 size={12} /> Approved
+          <span className="status-badge status-badge-approved">
+            <CheckCircle2 size={11} /> Approved
           </span>
         );
       case 'REJECTED':
         return (
-          <span className="status-pill" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-            <XCircle size={12} /> Rejected
+          <span className="status-badge status-badge-rejected">
+            <XCircle size={11} /> Rejected
           </span>
         );
       case 'EXPIRED':
         return (
-          <span className="status-pill archived-pill">
-            <Clock size={12} /> Expired
+          <span className="status-badge status-badge-expired">
+            <Clock size={11} /> Expired
           </span>
         );
       default:
-        return <span className="status-pill">{st}</span>;
+        return <span className="status-badge">{st}</span>;
     }
   };
 
@@ -112,11 +111,11 @@ export const AdminPaymentDetailPage: React.FC<AdminPaymentDetailPageProps> = ({
     return (
       <div className="admin-page-container">
         <AdminNav activeTab="payments" onNavigate={onNavigate} />
-        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <Loader2 size={36} className="spinner" color="#818cf8" />
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.75rem' }}>
-            Loading payment inspection details...
-          </p>
+        <div className="grid-2" style={{ marginTop: '1.5rem' }}>
+          <div className="skeleton skeleton-card" />
+          <div className="skeleton skeleton-card" />
+          <div className="skeleton skeleton-card" />
+          <div className="skeleton skeleton-card" />
         </div>
       </div>
     );
@@ -159,19 +158,19 @@ export const AdminPaymentDetailPage: React.FC<AdminPaymentDetailPageProps> = ({
         </button>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
+          <div className="page-title-bar">
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h1 className="page-title">{participant.full_name}</h1>
               {renderStatusBadge(payment.status)}
             </div>
             <p className="page-subtitle" style={{ marginTop: '4px' }}>
-              Payment Reference: <code className="monospace" style={{ color: '#38bdf8' }}>{payment.reference_id}</code>
+              Payment Reference: <code className="monospace" style={{ color: 'var(--accent-light)' }}>{payment.reference_id}</code>
             </p>
           </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border-color)', padding: '10px 16px', borderRadius: '12px', textAlign: 'right' }}>
-            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 600, display: 'block' }}>Payment Amount</span>
-            <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#34d399' }}>{formatINR(payment.amount_inr)}</span>
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', padding: '10px 16px', borderRadius: '12px', textAlign: 'right' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600, display: 'block' }}>Payment Amount</span>
+            <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>{formatINR(payment.amount_inr)}</span>
           </div>
         </div>
       </div>
@@ -416,11 +415,11 @@ export const AdminPaymentDetailPage: React.FC<AdminPaymentDetailPageProps> = ({
         </div>
       )}
 
-      {/* Strict Phase Boundary Banner */}
-      <div className="verification-notice-box" style={{ background: 'rgba(99, 102, 241, 0.08)', borderColor: 'rgba(99, 102, 241, 0.25)', color: '#c7d2fe' }}>
-        <Info size={18} color="#818cf8" />
+      {/* Inspection Notice */}
+      <div className="verification-notice-box" style={{ background: 'var(--accent-bg)', borderColor: 'var(--accent-border)', color: 'var(--text-secondary)' }}>
+        <Info size={18} color="var(--accent-light)" />
         <div>
-          <strong>Read-Only Inspection Mode (Phase 8):</strong> Approval and rejection workflows belong strictly to Phase 11. Payment statuses cannot be edited from the Phase 8 dashboard.
+          <strong style={{ color: 'var(--text-primary)' }}>Inspection Record:</strong> Payment session and submission history are securely logged for institutional auditing and reconciliation.
         </div>
       </div>
     </div>

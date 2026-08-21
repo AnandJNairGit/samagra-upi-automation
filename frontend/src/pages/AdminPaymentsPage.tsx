@@ -1,7 +1,6 @@
 import React from 'react';
 import { AdminNav } from '../components/AdminNav';
 import { PaymentTable } from '../components/PaymentTable';
-import { CreditCard } from 'lucide-react';
 
 interface AdminPaymentsPageProps {
   onNavigate: (path: string) => void;
@@ -17,11 +16,7 @@ export const AdminPaymentsPage: React.FC<AdminPaymentsPageProps> = ({
       <AdminNav activeTab="payments" onNavigate={onNavigate} />
 
       <header className="page-header">
-        <div>
-          <div className="badge success-badge">
-            <CreditCard size={14} />
-            Phase 8 — Payment Operations
-          </div>
+        <div className="page-title-bar">
           <h1 className="page-title">Payment Management</h1>
           <p className="page-subtitle">
             Inspect payment sessions, reference IDs, status distributions, and participant transaction claims.

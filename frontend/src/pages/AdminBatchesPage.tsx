@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Loader2,
   RefreshCw,
   Layers,
   X,
@@ -227,7 +226,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
       await updateBatch(batch.public_id, { status: targetStatus });
       await loadData();
     } catch (err: any) {
-      alert(`Status update failed: ${err.message}`);
+      setError(`Status update failed: ${err.message}`);
     }
   };
 
@@ -239,7 +238,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
       setBatchToArchive(null);
       await loadData();
     } catch (err: any) {
-      alert(`Failed to archive batch: ${err.message}`);
+      setError(`Failed to archive batch: ${err.message}`);
     } finally {
       setFormSubmitting(false);
     }
@@ -264,7 +263,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
       setCopiedBatchId(batch.public_id);
       setTimeout(() => setCopiedBatchId(null), 2500);
     } catch {
-      alert(`Could not copy to clipboard. Link URL: ${fullUrl}`);
+      setError(`Could not copy to clipboard. Link URL: ${fullUrl}`);
     }
   };
 
@@ -280,20 +279,20 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
     switch (status) {
       case 'ACTIVE':
         return (
-          <span className="status-pill active-pill">
-            <CheckCircle2 size={12} /> Active
+          <span className="status-badge status-badge-active">
+            <CheckCircle2 size={11} /> Active
           </span>
         );
       case 'INACTIVE':
         return (
-          <span className="status-pill inactive-pill">
-            <XCircle size={12} /> Inactive
+          <span className="status-badge status-badge-inactive">
+            <XCircle size={11} /> Inactive
           </span>
         );
       case 'ARCHIVED':
         return (
-          <span className="status-pill archived-pill">
-            <Lock size={12} /> Archived
+          <span className="status-badge status-badge-archived">
+            <Lock size={11} /> Archived
           </span>
         );
     }
@@ -304,16 +303,16 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
       <AdminNav activeTab="batches" onNavigate={onNavigate} />
 
       <header className="page-header">
-        <div>
+        <div className="page-title-bar">
           <h1 className="page-title">Batch & Cohort Management</h1>
-          <p className="page-subtitle">Manage training cohort dates, fee amounts, and course assignments.</p>
+          <p className="page-subtitle">Configure training cohorts, fee amounts, and registration links.</p>
         </div>
         <div className="page-actions">
           <button onClick={() => loadData()} disabled={loading} className="icon-btn" title="Refresh Batches">
-            <RefreshCw size={16} className={loading ? 'spinner' : ''} />
+            <RefreshCw size={15} className={loading ? 'spinner' : ''} />
           </button>
           <button onClick={openCreateModal} className="btn btn-primary">
-            <Plus size={16} />
+            <Plus size={15} />
             <span>New Batch</span>
           </button>
         </div>
@@ -327,6 +326,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
             value={selectedCourseFilter}
             onChange={(e) => handleCourseFilterChange(e.target.value)}
             className="filter-select"
+            style={{ width: '220px' }}
           >
             <option value="ALL">All Courses</option>
             {courses.map((c) => (
@@ -353,31 +353,35 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
         </div>
       </div>
 
+      {/* Error Banner if any */}
+      {error && (
+        <div className="error-banner">
+          <AlertTriangle size={16} />
+          <span>{error}</span>
+          <button onClick={() => setError(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Main Content Area */}
       {loading ? (
-        <div className="card loading-card">
-          <Loader2 size={28} className="spinner" color="#818cf8" />
-          <p style={{ marginTop: '0.75rem', color: 'var(--text-secondary)' }}>Loading batches...</p>
-        </div>
-      ) : error ? (
-        <div className="card error-card">
-          <AlertTriangle size={20} color="#ef4444" />
-          <p>{error}</p>
-          <button onClick={loadData} className="btn btn-sm btn-outline" style={{ marginTop: '0.75rem' }}>
-            Try Again
-          </button>
+        <div className="card" style={{ padding: '8px' }}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="skeleton skeleton-table-row" />
+          ))}
         </div>
       ) : batches.length === 0 ? (
         <div className="card empty-card">
-          <Layers size={36} color="#6b7280" />
+          <Layers size={36} color="var(--text-muted)" />
           <h3>No batches found</h3>
           <p>Create a cohort to begin configuring payments and schedules.</p>
           <button onClick={openCreateModal} className="btn btn-primary" style={{ marginTop: '1rem' }}>
-            <Plus size={16} /> Create Batch
+            <Plus size={15} /> Create Batch
           </button>
         </div>
       ) : (
-        <div className="table-responsive card">
+        <div className="table-responsive card" style={{ padding: 0 }}>
           <table className="admin-table">
             <thead>
               <tr>
@@ -395,7 +399,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                 return (
                   <tr key={batch.public_id}>
                     <td>
-                      <span className="font-semibold">{batch.name}</span>
+                      <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{batch.name}</span>
                     </td>
                     <td>
                       <span className="course-tag">
@@ -411,7 +415,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                       <div className="date-cell text-sm">
                         {batch.starts_at || batch.ends_at ? (
                           <>
-                            <Calendar size={13} color="#94a3b8" />
+                            <Calendar size={13} color="var(--text-muted)" />
                             <span>
                               {batch.starts_at ? new Date(batch.starts_at).toLocaleDateString() : '—'}
                               {' to '}
@@ -431,12 +435,12 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                           className="btn-action"
                           title="Open Central Cohort Workspace"
                           style={{
-                            background: 'rgba(99, 102, 241, 0.15)',
-                            color: '#818cf8',
-                            borderColor: 'rgba(99, 102, 241, 0.3)',
+                            background: 'var(--accent-bg)',
+                            color: 'var(--accent-light)',
+                            borderColor: 'var(--accent-border)',
                           }}
                         >
-                          <FolderOpen size={14} color="#818cf8" />
+                          <FolderOpen size={14} />
                           <span style={{ fontWeight: 600 }}>Workspace</span>
                         </button>
 
@@ -448,21 +452,21 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                               title={
                                 batch.status === 'ACTIVE'
                                   ? 'Copy Public Registration Link'
-                                  : 'Copy Registration Link (Note: Inactive batches display as unavailable to participants)'
+                                  : 'Copy Registration Link (Batch is currently inactive)'
                               }
                               style={{
-                                color: copiedBatchId === batch.public_id ? '#34d399' : '#38bdf8',
-                                borderColor: copiedBatchId === batch.public_id ? 'rgba(52, 211, 153, 0.4)' : undefined,
+                                color: copiedBatchId === batch.public_id ? 'var(--success)' : 'var(--info)',
+                                borderColor: copiedBatchId === batch.public_id ? 'var(--success-border)' : undefined,
                               }}
                             >
                               {copiedBatchId === batch.public_id ? (
                                 <>
-                                  <Check size={14} color="#34d399" />
-                                  <span style={{ color: '#34d399', fontWeight: 600 }}>Copied!</span>
+                                  <Check size={14} color="var(--success)" />
+                                  <span style={{ color: 'var(--success)', fontWeight: 600 }}>Copied!</span>
                                 </>
                               ) : (
                                 <>
-                                  <Copy size={14} color="#38bdf8" />
+                                  <Copy size={14} />
                                   <span>Copy Link</span>
                                 </>
                               )}
@@ -473,7 +477,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                               className="btn-action"
                               title="Edit Batch"
                             >
-                              <Edit2 size={15} color="#a5b4fc" />
+                              <Edit2 size={14} color="var(--accent-light)" />
                               <span>Edit</span>
                             </button>
 
@@ -483,7 +487,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                                 className="btn-action"
                                 title="Deactivate Batch"
                               >
-                                <XCircle size={15} color="#f59e0b" />
+                                <XCircle size={14} color="var(--warning)" />
                                 <span>Deactivate</span>
                               </button>
                             ) : (
@@ -492,7 +496,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                                 className="btn-action"
                                 title="Activate Batch"
                               >
-                                <CheckCircle2 size={15} color="#10b981" />
+                                <CheckCircle2 size={14} color="var(--success)" />
                                 <span>Activate</span>
                               </button>
                             )}
@@ -502,12 +506,12 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                               className="btn-action btn-action-danger"
                               title="Archive Batch"
                             >
-                              <Archive size={15} color="#ef4444" />
+                              <Archive size={14} color="var(--danger)" />
                               <span>Archive</span>
                             </button>
                           </>
                         ) : (
-                          <span className="read-only-tag">Read-Only</span>
+                          <span className="status-badge status-badge-archived">Read-Only</span>
                         )}
                       </div>
                     </td>
@@ -521,8 +525,8 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
 
       {/* Create Batch Modal */}
       {isCreateModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card">
+        <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Create New Batch</h3>
               <button onClick={() => setIsCreateModalOpen(false)} className="icon-btn">
@@ -544,7 +548,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                   value={formCourseId}
                   onChange={(e) => setFormCourseId(e.target.value)}
                   required
-                  className="form-input modal-input"
+                  className="filter-select"
                   disabled={formSubmitting}
                 >
                   <option value="" disabled>Select Course</option>
@@ -615,7 +619,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value as 'ACTIVE' | 'INACTIVE')}
-                  className="form-input modal-input"
+                  className="filter-select"
                   disabled={formSubmitting}
                 >
                   <option value="ACTIVE">ACTIVE (Published)</option>
@@ -647,8 +651,8 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
 
       {/* Edit Batch Modal */}
       {isEditModalOpen && selectedBatch && (
-        <div className="modal-overlay">
-          <div className="modal-card">
+        <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Edit Batch: {selectedBatch.name}</h3>
               <button onClick={() => setIsEditModalOpen(false)} className="icon-btn">
@@ -669,7 +673,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                 <select
                   value={formCourseId}
                   onChange={(e) => setFormCourseId(e.target.value)}
-                  className="form-input modal-input"
+                  className="filter-select"
                   disabled={formSubmitting}
                 >
                   {courses
@@ -738,7 +742,7 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                 <select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value as BatchStatus)}
-                  className="form-input modal-input"
+                  className="filter-select"
                   disabled={formSubmitting}
                 >
                   <option value="ACTIVE">ACTIVE</option>
@@ -776,28 +780,20 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
 
       {/* Batch Archive Confirmation Modal */}
       {batchToArchive && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '440px' }}>
-            <div className="modal-header">
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171' }}>
-                <AlertTriangle size={20} />
-                Archive Batch
-              </h3>
-              <button onClick={() => setBatchToArchive(null)} className="icon-btn">
-                <X size={18} />
-              </button>
+        <div className="confirm-modal-overlay" onClick={() => setBatchToArchive(null)}>
+          <div className="confirm-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-modal-icon" style={{ background: 'var(--danger-bg)', color: 'var(--danger)' }}>
+              <AlertTriangle size={24} />
             </div>
-
-            <div style={{ padding: '12px 0 20px', color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
-              <p>
-                Are you sure you want to archive <strong>{batchToArchive.name}</strong>?
-              </p>
-              <p style={{ marginTop: '10px', color: '#f87171', fontSize: '0.85rem', lineHeight: '1.4' }}>
-                ⚠️ <strong>Archiving is permanent and terminal.</strong> Once archived, this batch becomes strictly read-only and cannot be reactivated or edited.
-              </p>
-            </div>
-
-            <div className="modal-footer">
+            <h3 className="confirm-modal-title">Archive Batch</h3>
+            <p className="confirm-modal-body">
+              Are you sure you want to archive <strong>{batchToArchive.name}</strong>?
+              <br />
+              <span style={{ color: 'var(--danger)', fontSize: '0.825rem', marginTop: '6px', display: 'inline-block' }}>
+                ⚠️ Archiving is permanent and terminal. Cohort will become read-only.
+              </span>
+            </p>
+            <div className="confirm-modal-actions">
               <button
                 type="button"
                 onClick={() => setBatchToArchive(null)}
@@ -811,7 +807,6 @@ export const AdminBatchesPage: React.FC<AdminBatchesPageProps> = ({ onNavigate }
                 onClick={confirmArchiveBatch}
                 disabled={formSubmitting}
                 className="btn btn-danger"
-                style={{ background: '#ef4444', borderColor: '#ef4444', color: '#ffffff' }}
               >
                 {formSubmitting ? 'Archiving...' : 'Yes, Archive Batch'}
               </button>

@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Loader2,
   RefreshCw,
   Layers,
   X,
@@ -138,7 +137,7 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
       await updateCourse(course.public_id, { status: targetStatus });
       await fetchCourseList();
     } catch (err: any) {
-      alert(`Status update failed: ${err.message}`);
+      setError(`Status update failed: ${err.message}`);
     }
   };
 
@@ -150,7 +149,7 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
       setCourseToArchive(null);
       await fetchCourseList();
     } catch (err: any) {
-      alert(`Failed to archive course: ${err.message}`);
+      setError(`Failed to archive course: ${err.message}`);
     } finally {
       setFormSubmitting(false);
     }
@@ -160,20 +159,20 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
     switch (status) {
       case 'ACTIVE':
         return (
-          <span className="status-pill active-pill">
-            <CheckCircle2 size={12} /> Active
+          <span className="status-badge status-badge-active">
+            <CheckCircle2 size={11} /> Active
           </span>
         );
       case 'INACTIVE':
         return (
-          <span className="status-pill inactive-pill">
-            <XCircle size={12} /> Inactive
+          <span className="status-badge status-badge-inactive">
+            <XCircle size={11} /> Inactive
           </span>
         );
       case 'ARCHIVED':
         return (
-          <span className="status-pill archived-pill">
-            <Lock size={12} /> Archived
+          <span className="status-badge status-badge-archived">
+            <Lock size={11} /> Archived
           </span>
         );
     }
@@ -184,9 +183,9 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
       <AdminNav activeTab="courses" onNavigate={onNavigate} />
 
       <header className="page-header">
-        <div>
+        <div className="page-title-bar">
           <h1 className="page-title">Course Management</h1>
-          <p className="page-subtitle">Configure training programs, cohorts, and curricula.</p>
+          <p className="page-subtitle">Configure training programs, curricula, and batch offerings.</p>
         </div>
         <div className="page-actions">
           <button
@@ -195,10 +194,10 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
             className="icon-btn"
             title="Refresh Courses"
           >
-            <RefreshCw size={16} className={loading ? 'spinner' : ''} />
+            <RefreshCw size={15} className={loading ? 'spinner' : ''} />
           </button>
           <button onClick={openCreateModal} className="btn btn-primary">
-            <Plus size={16} />
+            <Plus size={15} />
             <span>New Course</span>
           </button>
         </div>
@@ -206,7 +205,7 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
 
       {/* Filter Tabs */}
       <div className="filter-bar">
-        <span className="filter-label">Filter by Status:</span>
+        <span className="filter-label">Filter Status:</span>
         <div className="filter-pills">
           {['ALL', 'ACTIVE', 'INACTIVE', 'ARCHIVED'].map((st) => (
             <button
@@ -221,30 +220,33 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
       </div>
 
       {/* Main Content Area */}
-      {loading ? (
-        <div className="card loading-card">
-          <Loader2 size={28} className="spinner" color="#818cf8" />
-          <p style={{ marginTop: '0.75rem', color: 'var(--text-secondary)' }}>Loading courses...</p>
-        </div>
-      ) : error ? (
-        <div className="card error-card">
-          <AlertTriangle size={20} color="#ef4444" />
-          <p>{error}</p>
-          <button onClick={fetchCourseList} className="btn btn-sm btn-outline" style={{ marginTop: '0.75rem' }}>
-            Try Again
+      {error && (
+        <div className="error-banner">
+          <AlertTriangle size={16} />
+          <span>{error}</span>
+          <button onClick={() => setError(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+            <X size={14} />
           </button>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="card" style={{ padding: '8px' }}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="skeleton skeleton-table-row" />
+          ))}
         </div>
       ) : courses.length === 0 ? (
         <div className="card empty-card">
-          <Layers size={36} color="#6b7280" />
+          <Layers size={36} color="var(--text-muted)" />
           <h3>No courses found</h3>
           <p>Get started by creating your first training program.</p>
           <button onClick={openCreateModal} className="btn btn-primary" style={{ marginTop: '1rem' }}>
-            <Plus size={16} /> Create Course
+            <Plus size={15} /> Create Course
           </button>
         </div>
       ) : (
-        <div className="table-responsive card">
+        <div className="table-responsive card" style={{ padding: 0 }}>
           <table className="admin-table">
             <thead>
               <tr>
@@ -284,7 +286,7 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
                           className="btn-action"
                           title="View Batches for this course"
                         >
-                          <Layers size={15} color="#38bdf8" />
+                          <Layers size={14} color="var(--info)" />
                           <span>Batches</span>
                         </button>
 
@@ -295,7 +297,7 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
                               className="btn-action"
                               title="Edit Course"
                             >
-                              <Edit2 size={15} color="#a5b4fc" />
+                              <Edit2 size={14} color="var(--accent-light)" />
                               <span>Edit</span>
                             </button>
 
@@ -305,7 +307,7 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
                                 className="btn-action"
                                 title="Deactivate Course"
                               >
-                                <XCircle size={15} color="#f59e0b" />
+                                <XCircle size={14} color="var(--warning)" />
                                 <span>Deactivate</span>
                               </button>
                             ) : (
@@ -314,7 +316,7 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
                                 className="btn-action"
                                 title="Activate Course"
                               >
-                                <CheckCircle2 size={15} color="#10b981" />
+                                <CheckCircle2 size={14} color="var(--success)" />
                                 <span>Activate</span>
                               </button>
                             )}
@@ -324,12 +326,12 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
                               className="btn-action btn-action-danger"
                               title="Archive Course"
                             >
-                              <Archive size={15} color="#ef4444" />
+                              <Archive size={14} color="var(--danger)" />
                               <span>Archive</span>
                             </button>
                           </>
                         ) : (
-                          <span className="read-only-tag">Read-Only</span>
+                          <span className="status-badge status-badge-archived">Read-Only</span>
                         )}
                       </div>
                     </td>
@@ -343,8 +345,8 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
 
       {/* Create Course Modal */}
       {isCreateModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card">
+        <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Create New Course</h3>
               <button onClick={() => setIsCreateModalOpen(false)} className="icon-btn">
@@ -391,7 +393,7 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value as 'ACTIVE' | 'INACTIVE')}
-                  className="form-input modal-input"
+                  className="filter-select"
                   disabled={formSubmitting}
                 >
                   <option value="ACTIVE">ACTIVE (Published)</option>
@@ -423,8 +425,8 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
 
       {/* Edit Course Modal */}
       {isEditModalOpen && selectedCourse && (
-        <div className="modal-overlay">
-          <div className="modal-card">
+        <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Edit Course: {selectedCourse.name}</h3>
               <button onClick={() => setIsEditModalOpen(false)} className="icon-btn">
@@ -469,7 +471,7 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
                 <select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value as CourseStatus)}
-                  className="form-input modal-input"
+                  className="filter-select"
                   disabled={formSubmitting}
                 >
                   <option value="ACTIVE">ACTIVE</option>
@@ -507,28 +509,20 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
 
       {/* Archive Confirmation Modal */}
       {courseToArchive && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '440px' }}>
-            <div className="modal-header">
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171' }}>
-                <AlertTriangle size={20} />
-                Archive Course
-              </h3>
-              <button onClick={() => setCourseToArchive(null)} className="icon-btn">
-                <X size={18} />
-              </button>
+        <div className="confirm-modal-overlay" onClick={() => setCourseToArchive(null)}>
+          <div className="confirm-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-modal-icon" style={{ background: 'var(--danger-bg)', color: 'var(--danger)' }}>
+              <AlertTriangle size={24} />
             </div>
-
-            <div style={{ padding: '12px 0 20px', color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
-              <p>
-                Are you sure you want to archive <strong>{courseToArchive.name}</strong>?
-              </p>
-              <p style={{ marginTop: '10px', color: '#f87171', fontSize: '0.85rem', lineHeight: '1.4' }}>
-                ⚠️ <strong>Archiving is permanent and terminal.</strong> Once archived, this course becomes strictly read-only and cannot be reactivated or edited.
-              </p>
-            </div>
-
-            <div className="modal-footer">
+            <h3 className="confirm-modal-title">Archive Course</h3>
+            <p className="confirm-modal-body">
+              Are you sure you want to archive <strong>{courseToArchive.name}</strong>?
+              <br />
+              <span style={{ color: 'var(--danger)', fontSize: '0.825rem', marginTop: '6px', display: 'inline-block' }}>
+                ⚠️ Archiving is permanent and read-only.
+              </span>
+            </p>
+            <div className="confirm-modal-actions">
               <button
                 type="button"
                 onClick={() => setCourseToArchive(null)}
@@ -542,7 +536,6 @@ export const AdminCoursesPage: React.FC<AdminCoursesPageProps> = ({ onNavigate }
                 onClick={confirmArchiveCourse}
                 disabled={formSubmitting}
                 className="btn btn-danger"
-                style={{ background: '#ef4444', borderColor: '#ef4444', color: '#ffffff' }}
               >
                 {formSubmitting ? 'Archiving...' : 'Yes, Archive Course'}
               </button>
