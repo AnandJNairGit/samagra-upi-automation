@@ -303,8 +303,8 @@ export const AdminPaymentDetailPage: React.FC<AdminPaymentDetailPageProps> = ({
                 </tr>
                 <tr>
                   <td className="meta-key">Transaction Reference (UTR)</td>
-                  <td className="meta-val monospace font-bold" style={{ color: '#34d399', fontSize: '1.05rem' }}>
-                    {current_submission.utr}
+                  <td className="meta-val monospace font-bold" style={{ color: current_submission.utr ? '#34d399' : '#94a3b8', fontSize: '1.05rem' }}>
+                    {current_submission.utr || <span style={{ fontStyle: 'italic', fontWeight: 'normal' }}>None (Recorded via Reference ID)</span>}
                   </td>
                 </tr>
                 <tr>
@@ -377,8 +377,8 @@ export const AdminPaymentDetailPage: React.FC<AdminPaymentDetailPageProps> = ({
                 {submission_history.map((sub) => (
                   <tr key={sub.public_id} style={{ opacity: sub.is_current ? 1 : 0.65 }}>
                     <td className="monospace">{sub.public_id}</td>
-                    <td className="monospace font-bold" style={{ color: sub.is_current ? '#34d399' : '#cbd5e1' }}>
-                      {sub.utr}
+                    <td className="monospace font-bold" style={{ color: sub.utr && sub.is_current ? '#34d399' : '#cbd5e1' }}>
+                      {sub.utr || '—'}
                     </td>
                     <td>{renderStatusBadge(sub.status)}</td>
                     <td>

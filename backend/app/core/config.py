@@ -70,7 +70,7 @@ class Settings(BaseSettings):
 
     # UPI & Payment Processing Configuration
     UPI_ID: str = Field(
-        default="samagralearning@ibl",
+        default="7902226353@okbizaxis",
         description="Primary UPI VPA ID for payment collection",
     )
     UPI_PAYEE_NAME: str = Field(

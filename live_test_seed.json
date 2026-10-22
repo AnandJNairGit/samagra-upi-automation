@@ -1,0 +1,48 @@
+{
+  "course_name": "UPI Live Reconciliation Course",
+  "course_description": "Live test course for verifying UPI bank statement matching",
+  "batch_name": "UPI Live Test Batch",
+  "batch_amount_inr": 1,
+  "participants": [
+    {
+      "name": "Sayooj T",
+      "phone": "9986347069",
+      "email": "sayooj.t@example.com",
+      "reference_id": "SAYOOJ2875KONS",
+      "amount_inr": 1,
+      "utr": "623375669560"
+    },
+    {
+      "name": "Sreelal Sudhakar",
+      "phone": "9986347069",
+      "email": "sreelal.s@example.com",
+      "reference_id": "SREELAL93437KJG",
+      "amount_inr": 1,
+      "utr": "623364919750"
+    },
+    {
+      "name": "Kashinathan S",
+      "phone": "9986347069",
+      "email": "kashinathan.s@example.com",
+      "reference_id": "UPI",
+      "amount_inr": 1,
+      "utr": "659936939765"
+    },
+    {
+      "name": "Vishnu G Nath",
+      "phone": "9986347069",
+      "email": "vishnu.g@example.com",
+      "reference_id": "VISHNU 3553 433Q",
+      "amount_inr": 2,
+      "utr": "623311011953"
+    },
+    {
+      "name": "Anand J Nair",
+      "phone": "9986347069",
+      "email": "anand.j@example.com",
+      "reference_id": "ANAND0830ES8R",
+      "amount_inr": 2,
+      "utr": "073500329599"
+    }
+  ]
+}

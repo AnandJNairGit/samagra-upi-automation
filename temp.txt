@@ -33,3 +33,13 @@ Option B (Docker Container):
 bash
 docker compose exec backend python /app/clear_db.py
 
+
+
+Open 
+
+live_test_seed.json
+ and change course_name, batch_name, or any participant values.
+Double-click 
+
+run_live_seed.bat
+ (or run .\run_live_seed.bat in your terminal).

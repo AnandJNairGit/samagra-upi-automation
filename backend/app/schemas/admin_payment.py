@@ -87,7 +87,7 @@ class AdminPaymentDetailSubmission(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     public_id: uuid.UUID
-    utr: str
+    utr: Optional[str] = None
     status: str
     is_current: bool
     submitted_at: datetime

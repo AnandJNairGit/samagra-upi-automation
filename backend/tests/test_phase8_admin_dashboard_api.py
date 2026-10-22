@@ -496,3 +496,53 @@ async def test_admin_approve_payment_session(
         f"/v1/admin/payments/{ps_uuid}/approve", headers=admin_auth_headers
     )
     assert res_duplicate.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_admin_payment_detail_with_null_utr(
+    client: AsyncClient, admin_auth_headers: dict, sample_dataset, db_session: AsyncSession
+):
+    """Verify that admin can fetch details for payment sessions with null UTR (UTR-less submissions)."""
+    course = sample_dataset["course"]
+    batch = sample_dataset["batch"]
+
+    ps_null_utr = PaymentSession(
+        public_id=uuid.uuid4(),
+        full_name="Null UTR Student",
+        phone="9988776655",
+        email="nullutr@example.com",
+        course_id=course.id,
+        batch_id=batch.id,
+        course_name_snapshot=course.name,
+        batch_name_snapshot=batch.name,
+        amount_inr=batch.amount_inr,
+        reference_id=f"REF_NULL_{uuid.uuid4().hex[:6]}",
+        upi_id_snapshot="samagra@upi",
+        payee_name_snapshot="Samagra",
+        upi_uri="upi://pay",
+        status="SUBMITTED",
+    )
+    db_session.add(ps_null_utr)
+    await db_session.flush()
+
+    sub_null = PaymentSubmission(
+        public_id=uuid.uuid4(),
+        payment_session_id=ps_null_utr.id,
+        utr=None,
+        status="SUBMITTED",
+        is_current=True,
+    )
+    db_session.add(sub_null)
+    await db_session.flush()
+
+    res = await client.get(
+        f"/v1/admin/payments/{ps_null_utr.public_id}",
+        headers=admin_auth_headers,
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["payment_session_public_id"] == str(ps_null_utr.public_id)
+    assert data["current_submission"] is not None
+    assert data["current_submission"]["utr"] is None
+    assert data["current_submission"]["status"] == "SUBMITTED"
+

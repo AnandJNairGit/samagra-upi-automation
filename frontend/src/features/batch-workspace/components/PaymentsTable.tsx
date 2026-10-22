@@ -8,11 +8,13 @@ import {
   CheckCircle,
   AlertTriangle,
   X,
+  MessageCircle,
 } from 'lucide-react';
 import { BatchSummary } from '../../../types/batch';
 import { AdminPaymentListItem } from '../../../types/adminPayment';
 import { StatementImportListItem } from '../../../types/statementImport';
 import { ReconciliationResultResponse } from '../../../types/reconciliation';
+import { buildPaymentReceivedWhatsAppUrl } from '../../../utils/whatsapp';
 
 interface PaymentsTableProps {
   summary: BatchSummary;
@@ -340,6 +342,42 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
                           >
                             <Eye size={13} /> Inspect
                           </button>
+
+                          {/* WhatsApp Confirmation CTA */}
+                          {(() => {
+                            const isApproved = p.payment_session_status === 'APPROVED';
+                            const whatsappUrl = isApproved
+                              ? buildPaymentReceivedWhatsAppUrl({
+                                  participant_name: p.participant_name,
+                                  phone: p.phone,
+                                  amount_inr: p.amount_inr,
+                                  reference_id: p.reference_id,
+                                  course_name: p.course_name,
+                                  batch_name: p.batch_name,
+                                  utr: p.utr,
+                                })
+                              : undefined;
+
+                            return (
+                              <button
+                                onClick={() => {
+                                  if (whatsappUrl) {
+                                    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+                                  }
+                                }}
+                                disabled={!isApproved}
+                                className="btn-action btn-action-whatsapp"
+                                title={
+                                  isApproved
+                                    ? `Send payment confirmation receipt via WhatsApp to ${p.participant_name}`
+                                    : 'WhatsApp notification is enabled only for APPROVED payments'
+                                }
+                              >
+                                <MessageCircle size={13} />
+                                <span>WhatsApp</span>
+                              </button>
+                            );
+                          })()}
 
                           {p.payment_session_status !== 'APPROVED' && (
                             <button

@@ -1,4 +1,4 @@
-﻿# Phase 10: Reconciliation Engine — Implementation Plan & Summary
+# Phase 10: Reconciliation Engine — Implementation Plan & Summary
 
 ## Overview
 

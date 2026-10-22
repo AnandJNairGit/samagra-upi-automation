@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Search,
   XCircle,
+  MessageCircle,
 } from 'lucide-react';
 import { getCourses } from '../services/courseApi';
 import { getBatches } from '../services/batchApi';
@@ -17,6 +18,7 @@ import { fetchAdminPayments, fetchAdminSubmittedPayments } from '../services/adm
 import { AdminPaymentFilterParams, AdminPaymentListItem } from '../types/adminPayment';
 import { Course } from '../types/course';
 import { Batch } from '../types/batch';
+import { buildPaymentReceivedWhatsAppUrl } from '../utils/whatsapp';
 
 interface PaymentTableProps {
   fixedStatus?: string; // If set (e.g. 'SUBMITTED'), locks the status filter
@@ -360,14 +362,51 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <button
-                        onClick={() => onNavigate(`/upi/admin/payments/${item.payment_session_public_id}`)}
-                        className="btn btn-sm btn-outline"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <Eye size={13} />
-                        <span>View Details</span>
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                        {(() => {
+                          const isApproved = item.payment_session_status === 'APPROVED';
+                          const whatsappUrl = isApproved
+                            ? buildPaymentReceivedWhatsAppUrl({
+                                participant_name: item.participant_name,
+                                phone: item.phone,
+                                amount_inr: item.amount_inr,
+                                reference_id: item.reference_id,
+                                course_name: item.course_name,
+                                batch_name: item.batch_name,
+                                utr: item.utr,
+                              })
+                            : undefined;
+
+                          return (
+                            <button
+                              onClick={() => {
+                                if (whatsappUrl) {
+                                  window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+                                }
+                              }}
+                              disabled={!isApproved}
+                              className="btn-action btn-action-whatsapp"
+                              title={
+                                isApproved
+                                  ? `Send payment confirmation receipt via WhatsApp to ${item.participant_name}`
+                                  : 'WhatsApp notification is enabled only for APPROVED payments'
+                              }
+                            >
+                              <MessageCircle size={13} />
+                              <span>WhatsApp</span>
+                            </button>
+                          );
+                        })()}
+
+                        <button
+                          onClick={() => onNavigate(`/upi/admin/payments/${item.payment_session_public_id}`)}
+                          className="btn btn-sm btn-outline"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <Eye size={13} />
+                          <span>View Details</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

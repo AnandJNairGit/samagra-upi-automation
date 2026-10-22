@@ -1,9 +1,10 @@
-"""Protected admin endpoints for health, dashboard summary metrics, and payment inspection."""
-
+import logging
 import uuid
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 from app.auth.dependencies import require_admin
 from app.core.database import get_db
 from app.models.admin_user import AdminUser
@@ -195,6 +196,7 @@ async def get_admin_payment_detail(
             detail=exc.message,
         ) from exc
     except Exception as exc:
+        logger.exception("Failed to load payment details for session %s: %s", payment_session_public_id, exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to load payment details.",

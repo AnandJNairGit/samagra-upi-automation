@@ -63,7 +63,7 @@ export interface AdminPaymentDetailPayment {
 
 export interface AdminPaymentDetailSubmission {
   public_id: string;
-  utr: string;
+  utr?: string | null;
   status: string;
   is_current: boolean;
   submitted_at: string;
